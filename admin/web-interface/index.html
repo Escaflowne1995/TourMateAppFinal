@@ -37,7 +37,41 @@
     <script type="text/babel" src="components/AdminApp.js"></script>
 
     <script type="text/babel">
-        ReactDOM.render(<AdminApp />, document.getElementById('admin-root'));
+        // Debug: Check if components are loaded
+        console.log('Available components:', {
+            AdminApp: typeof window.AdminApp,
+            AdminLogin: typeof window.AdminLogin,
+            AdminDashboard: typeof window.AdminDashboard,
+            UserManagement: typeof window.UserManagement,
+            DestinationManagement: typeof window.DestinationManagement,
+            DelicaciesManagement: typeof window.DelicaciesManagement
+        });
+        
+        console.log('Available services:', {
+            AdminService: typeof window.AdminService,
+            SupabaseHelper: typeof window.SupabaseHelper,
+            AnalyticsService: typeof window.AnalyticsService,
+            supabase: typeof window.supabase
+        });
+        
+        // Test simple React rendering first
+        console.log('Testing basic React rendering...');
+        const testElement = React.createElement('div', { style: { padding: '2rem', textAlign: 'center' } }, 
+            React.createElement('h2', null, 'React Test'),
+            React.createElement('p', null, 'If you see this, React is working!')
+        );
+        ReactDOM.render(testElement, document.getElementById('admin-root'));
+        
+        // Wait a bit then try to render the actual app
+        setTimeout(() => {
+            if (typeof window.AdminApp !== 'undefined') {
+                console.log('Rendering AdminApp...');
+                ReactDOM.render(React.createElement(AdminApp), document.getElementById('admin-root'));
+            } else {
+                console.error('AdminApp component not found!');
+                document.getElementById('admin-root').innerHTML = '<div style="padding: 2rem; text-align: center; color: red;"><h2>Error: AdminApp component not loaded</h2><p>Please check the browser console for more details.</p></div>';
+            }
+        }, 1000);
     </script>
 </body>
 </html>

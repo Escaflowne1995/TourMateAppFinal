@@ -60,13 +60,11 @@ const AdminApp = () => {
 
   // Loading screen
   if (loading) {
-    return (
-      <div className="admin-app">
-        <div className="loading">
-          <div className="spinner"></div>
-          <span>Loading Admin Panel...</span>
-        </div>
-      </div>
+    return React.createElement('div', { className: 'admin-app' },
+      React.createElement('div', { className: 'loading' },
+        React.createElement('div', { className: 'spinner' }),
+        React.createElement('span', null, 'Loading Admin Panel...')
+      )
     );
   }
 
@@ -76,22 +74,19 @@ const AdminApp = () => {
   }
 
   // Main admin interface
-  return (
-    <div className="admin-app">
-      <AdminHeader 
-        currentAdmin={currentAdmin}
-        currentView={currentView}
-        onViewChange={handleViewChange}
-        onLogout={handleLogout}
-      />
-      
-      <main className="admin-main">
-        <AdminContent 
-          currentView={currentView}
-          currentAdmin={currentAdmin}
-        />
-      </main>
-    </div>
+  return React.createElement('div', { className: 'admin-app' },
+    React.createElement(AdminHeader, {
+      currentAdmin: currentAdmin,
+      currentView: currentView,
+      onViewChange: handleViewChange,
+      onLogout: handleLogout
+    }),
+    React.createElement('main', { className: 'admin-main' },
+      React.createElement(AdminContent, {
+        currentView: currentView,
+        currentAdmin: currentAdmin
+      })
+    )
   );
 };
 
@@ -104,39 +99,35 @@ const AdminHeader = ({ currentAdmin, currentView, onViewChange, onLogout }) => {
     { key: 'delicacies', label: 'Delicacies', icon: 'fa-utensils' },
   ];
 
-  return (
-    <header className="admin-header">
-      <div className="admin-logo">
-        <i className="fas fa-crown"></i>
-        <span>Cebu Tourist Admin</span>
-      </div>
-      
-      <nav className="admin-nav">
-        <div className="nav-tabs">
-          {navItems.map(item => (
-            <button
-              key={item.key}
-              className={`nav-tab ${currentView === item.key ? 'active' : ''}`}
-              onClick={() => onViewChange(item.key)}
-            >
-              <i className={`fas ${item.icon}`}></i>
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </div>
-        
-        <div className="admin-user">
-          <div className="user-info">
-            <div className="user-name">{currentAdmin.name}</div>
-            <div className="user-role">{currentAdmin.role}</div>
-          </div>
-          <button className="logout-btn" onClick={onLogout}>
-            <i className="fas fa-sign-out-alt"></i>
-            Logout
-          </button>
-        </div>
-      </nav>
-    </header>
+  return React.createElement('header', { className: 'admin-header' },
+    React.createElement('div', { className: 'admin-logo' },
+      React.createElement('i', { className: 'fas fa-crown' }),
+      React.createElement('span', null, 'Cebu Tourist Admin')
+    ),
+    React.createElement('nav', { className: 'admin-nav' },
+      React.createElement('div', { className: 'nav-tabs' },
+        navItems.map(item => 
+          React.createElement('button', {
+            key: item.key,
+            className: `nav-tab ${currentView === item.key ? 'active' : ''}`,
+            onClick: () => onViewChange(item.key)
+          },
+            React.createElement('i', { className: `fas ${item.icon}` }),
+            React.createElement('span', null, item.label)
+          )
+        )
+      ),
+      React.createElement('div', { className: 'admin-user' },
+        React.createElement('div', { className: 'user-info' },
+          React.createElement('div', { className: 'user-name' }, currentAdmin.name),
+          React.createElement('div', { className: 'user-role' }, currentAdmin.role)
+        ),
+        React.createElement('button', { className: 'logout-btn', onClick: onLogout },
+          React.createElement('i', { className: 'fas fa-sign-out-alt' }),
+          'Logout'
+        )
+      )
+    )
   );
 };
 
@@ -152,12 +143,10 @@ const AdminContent = ({ currentView, currentAdmin }) => {
     case 'delicacies':
       return React.createElement(DelicaciesManagement, { currentAdmin });
     default:
-      return (
-        <div className="empty-state">
-          <i className="fas fa-exclamation-triangle"></i>
-          <h3>Page Not Found</h3>
-          <p>The requested page could not be found.</p>
-        </div>
+      return React.createElement('div', { className: 'empty-state' },
+        React.createElement('i', { className: 'fas fa-exclamation-triangle' }),
+        React.createElement('h3', null, 'Page Not Found'),
+        React.createElement('p', null, 'The requested page could not be found.')
       );
   }
 };
