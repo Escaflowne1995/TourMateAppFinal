@@ -17,7 +17,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import LocalAuthService from '../../services/auth/LocalAuthService';
 import { getCurrentUser } from '../../services/supabase/authService';
-import UserService from '../../services/user/UserService';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getThemeColors } from '../../utils/theme';
 
@@ -28,8 +27,14 @@ const EditProfileScreen = ({ navigation, route }) => {
   
   const userData = route.params?.userData || {};
   const [isLoading, setIsLoading] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: userData.fullName || userData.displayName || userData.name || 'Guest User',
+    name: userData.fullName || 
+          userData.displayName || 
+          userData.name || 
+          userData.user_metadata?.name ||
+          userData.email?.split('@')[0] || // Use email prefix as fallback
+          'Guest User',
     email: userData.email || 'guest@example.com',
     phone: userData.phone || '',
     location: userData.location || 'Cebu City, Philippines',
@@ -58,15 +63,100 @@ const EditProfileScreen = ({ navigation, route }) => {
     const loadFreshUserData = async () => {
       try {
         console.log('EditProfile: Loading fresh user data...');
-        const result = await UserService.getCurrentUserData();
         
-        if (result.success && result.userData) {
-          const freshData = result.userData;
-          console.log('EditProfile: Fresh user data loaded:', freshData);
+        // Check if we already have profile data from route params
+        if (userData && Object.keys(userData).length > 0) {
+          console.log('EditProfile: Using route params data:', userData);
+          setProfileData({
+            name: userData.fullName || userData.name || userData.displayName || 'Guest User',
+            email: userData.email || 'guest@example.com',
+            phone: userData.phone || '',
+            location: userData.location || 'Cebu City, Philippines',
+            avatar: userData.avatar || userData.avatar_url || '',
+            birthDate: userData.birthDate || userData.birth_date || '',
+            gender: userData.gender || '',
+            country: userData.country || '',
+            zipCode: userData.zipCode || userData.zip_code || ''
+          });
+          setDataLoaded(true);
+          return; // Don't override with fresh data if we have route params
+        }
+        
+        // Only load fresh data if we don't have route params
+        console.log('EditProfile: No route params, loading fresh data...');
+        
+        // Try multiple methods to get user data (even when logged out)
+        let freshData = null;
+        
+        // Method 1: Try current user storage first (most recent data)
+        try {
+          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+          const currentUserString = await AsyncStorage.getItem('@tourist_app_current_user');
+          if (currentUserString) {
+            freshData = JSON.parse(currentUserString);
+            console.log('EditProfile: Fresh user data from current user storage:', freshData);
+          }
+        } catch (error) {
+          console.log('EditProfile: Current user storage failed');
+        }
+        
+        // Method 2: Try LocalAuthService
+        if (!freshData) {
+          try {
+            await LocalAuthService.initialize();
+            const localUser = await LocalAuthService.getCurrentUser();
+            if (localUser) {
+              freshData = localUser;
+              console.log('EditProfile: Fresh user data from LocalAuth:', freshData);
+            }
+          } catch (error) {
+            console.log('EditProfile: LocalAuthService failed');
+          }
+        }
+        
+        // Method 3: Try Supabase (if authenticated)
+        if (!freshData) {
+          try {
+            const supabaseResult = await getCurrentUser();
+            if (supabaseResult.success && supabaseResult.data) {
+              freshData = supabaseResult.data;
+              console.log('EditProfile: Fresh user data from Supabase:', freshData);
+            }
+          } catch (error) {
+            console.log('EditProfile: Supabase failed');
+          }
+        }
+        
+        // Method 4: Try to find user in users array by email (fallback)
+        if (!freshData && profileData.email && profileData.email !== 'guest@example.com') {
+          try {
+            const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+            const usersString = await AsyncStorage.getItem('@tourist_app_users');
+            if (usersString) {
+              const users = JSON.parse(usersString);
+              const foundUser = users.find(user => user.email === profileData.email);
+              if (foundUser) {
+                freshData = foundUser;
+                console.log('EditProfile: Found user in users array:', freshData);
+              }
+            }
+          } catch (error) {
+            console.log('EditProfile: Users array search failed');
+          }
+        }
+        
+        if (freshData) {
+          // Debug: Log the fresh data to see what fields are available
+          console.log('EditProfile: Fresh data received:', JSON.stringify(freshData, null, 2));
           
           // Update profile data with fresh data
           setProfileData({
-            name: freshData.fullName || freshData.displayName || freshData.name || 'Guest User',
+            name: freshData.fullName || 
+                  freshData.displayName || 
+                  freshData.name || 
+                  freshData.user_metadata?.name ||
+                  freshData.email?.split('@')[0] || // Use email prefix as fallback
+                  'Guest User',
             email: freshData.email || 'guest@example.com',
             phone: freshData.phone || '',
             location: freshData.location || 'Cebu City, Philippines',
@@ -76,8 +166,22 @@ const EditProfileScreen = ({ navigation, route }) => {
             country: freshData.country || '',
             zipCode: freshData.zipCode || ''
           });
+          setDataLoaded(true);
         } else {
-          console.log('EditProfile: Could not load fresh user data, using route params');
+          console.log('EditProfile: No user data found, using default values');
+          // Set default values if no data is found
+          setProfileData({
+            name: 'Guest User',
+            email: 'guest@example.com',
+            phone: '',
+            location: 'Cebu City, Philippines',
+            avatar: '',
+            birthDate: '',
+            gender: '',
+            country: 'Philippines',
+            zipCode: ''
+          });
+          setDataLoaded(true);
         }
       } catch (error) {
         console.error('EditProfile: Error loading fresh user data:', error);
@@ -85,136 +189,121 @@ const EditProfileScreen = ({ navigation, route }) => {
     };
 
     loadFreshUserData();
-  }, []); // Run once when component mounts
+    
+    // Set up navigation focus listener to refresh when returning to screen
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log('EditProfile: Screen focused, checking if refresh is needed...');
+      // Only refresh if data hasn't been loaded yet
+      if (!dataLoaded) {
+        console.log('EditProfile: Data not loaded yet, refreshing...');
+        loadFreshUserData();
+      } else {
+        console.log('EditProfile: Data already loaded, skipping refresh');
+      }
+    });
+    
+    return unsubscribe;
+  }, [navigation, dataLoaded]); // Run when component mounts and when navigation changes
 
   const handleSave = async () => {
-    console.log('=== PROFILE SAVE DEBUG START ===');
+    console.log('=== SIMPLE PROFILE SAVE START ===');
     console.log('Profile data to save:', profileData);
     
-    // Check authentication with both Supabase and local auth
-    try {
-      // First try Supabase authentication
-      const supabaseResult = await getCurrentUser();
-      let currentUser = null;
-      
-      if (supabaseResult.success && supabaseResult.data) {
-        currentUser = supabaseResult.data;
-        console.log('Authenticated via Supabase:', currentUser.id);
-      } else {
-        // Fallback to local authentication
-        currentUser = await LocalAuthService.getCurrentUser();
-        console.log('Authenticated via Local Auth:', currentUser ? 'Yes' : 'No');
-      }
-
-      if (!currentUser) {
-        console.log('ERROR: No current user found');
-        Alert.alert('Error', 'You must be logged in to update your profile.');
-        return;
-      }
-    } catch (error) {
-      console.error('Authentication check error:', error);
-      Alert.alert('Error', 'Authentication error. Please log in again.');
-      return;
-    }
-
     setIsLoading(true);
     
     try {
-      // Update user profile
+      // Ultra-simple save approach - just save directly to storage
+      console.log('=== ULTRA-SIMPLE SAVE APPROACH ===');
+      
+      // Import AsyncStorage
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      
+      // Prepare the data to save
       const updatedUserData = {
+        name: profileData.name,
         fullName: profileData.name,
+        displayName: profileData.name,
         email: profileData.email,
         phone: profileData.phone,
         location: profileData.location,
         avatar: profileData.avatar,
+        avatar_url: profileData.avatar,
         birthDate: profileData.birthDate,
+        birth_date: profileData.birthDate,
         gender: profileData.gender,
         country: profileData.country,
         zipCode: profileData.zipCode,
-        updatedAt: new Date().toISOString()
+        zip_code: profileData.zipCode,
+        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
       
-      // First try Supabase authentication and update
-      const supabaseResult = await getCurrentUser();
-      if (supabaseResult.success && supabaseResult.data) {
-        console.log('=== SUPABASE SAVE ATTEMPT ===');
-        // User is authenticated with Supabase, update Supabase profile
-        const { supabase } = require('../../services/supabase/supabaseClient');
+      console.log('Saving user data:', updatedUserData);
+      
+      // Get existing users
+      const usersString = await AsyncStorage.getItem('@tourist_app_users');
+      const users = usersString ? JSON.parse(usersString) : [];
+      
+      // Find current user by email
+      const userIndex = users.findIndex(user => user.email === profileData.email);
+      
+      if (userIndex !== -1) {
+        // Update existing user
+        users[userIndex] = { ...users[userIndex], ...updatedUserData };
+        console.log('✅ Updated existing user at index:', userIndex);
+      } else {
+        // Create new user entry
+        const newUser = {
+          uid: Date.now().toString(),
+          email: profileData.email,
+          ...updatedUserData,
+          createdAt: new Date().toISOString()
+        };
+        users.push(newUser);
+        console.log('✅ Created new user entry');
+      }
+      
+      // Save users array
+      await AsyncStorage.setItem('@tourist_app_users', JSON.stringify(users));
+      console.log('✅ Users array saved to storage');
+      
+      // Always save as current user (even when logged out)
+      const currentUser = users.find(user => user.email === profileData.email);
+      if (currentUser) {
+        await AsyncStorage.setItem('@tourist_app_current_user', JSON.stringify(currentUser));
+        console.log('✅ Current user saved to storage');
         
-        // Start with basic fields that exist in current schema
-        const profileUpdateData = {
-          id: supabaseResult.data.id,
-          name: profileData.name, // Keep old column for backward compatibility
-          updated_at: new Date().toISOString()
-        };
-
-        // Try to update with extended data first, fallback to basic if needed
-        let updateData = {
-          ...profileUpdateData,
-          full_name: profileData.name,
-          phone: profileData.phone,
-          location: profileData.location,
-          avatar_url: profileData.avatar,
-          birth_date: profileData.birthDate,
-          gender: profileData.gender,
-          country: profileData.country,
-          zip_code: profileData.zipCode
-        };
-
-        console.log('Attempting Supabase update with data:', updateData);
-
-        const { error } = await supabase
-          .from('profiles')
-          .upsert(updateData);
-          
-        if (error) {
-          console.error('=== SUPABASE UPDATE ERROR ===');
-          console.error('Error details:', error);
-          console.error('Error code:', error.code);
-          console.error('Error message:', error.message);
-          
-          // If the error is about missing columns, try with basic fields only
-          if (error.message.includes('column') || error.message.includes('avatar_url') || error.code === 'PGRST204') {
-            console.log('=== TRYING BASIC FIELDS FALLBACK ===');
-            console.log('Basic update data:', profileUpdateData);
-            
-            const { error: basicError } = await supabase
-              .from('profiles')
-              .upsert(profileUpdateData);
-              
-            if (basicError) {
-              console.error('=== BASIC UPDATE ALSO FAILED ===');
-              console.error('Basic error:', basicError);
-              // Fallback to local storage if Supabase fails completely
-              console.log('=== FALLING BACK TO LOCAL STORAGE ===');
-              console.log('Local storage data:', updatedUserData);
-              await LocalAuthService.updateUserProfile(updatedUserData);
-              console.log('=== LOCAL STORAGE SAVE COMPLETED ===');
-            } else {
-              console.log('=== BASIC SUPABASE UPDATE SUCCESS ===');
-              console.log('Profile updated with basic fields. Database schema needs to be updated for full profile features.');
-            }
-          } else {
-            console.error('=== UNEXPECTED SUPABASE ERROR ===');
-            console.error('Error:', error);
-            // Fallback to local storage for any other errors
-            console.log('=== FALLING BACK TO LOCAL STORAGE ===');
-            console.log('Local storage data:', updatedUserData);
-            await LocalAuthService.updateUserProfile(updatedUserData);
-            console.log('=== LOCAL STORAGE SAVE COMPLETED ===');
-          }
-        } else {
-          console.log('=== SUPABASE UPDATE SUCCESS ===');
-          console.log('Full profile data saved to Supabase successfully!');
+        // Also update LocalAuthService currentUser if it exists
+        try {
+          const LocalAuthService = require('../../services/auth/LocalAuthService').default;
+          LocalAuthService.currentUser = currentUser;
+          console.log('✅ LocalAuthService currentUser updated');
+        } catch (error) {
+          console.log('LocalAuthService not available, skipping update');
         }
       } else {
-        console.log('=== NO SUPABASE AUTH - USING LOCAL STORAGE ===');
-        console.log('Local storage data:', updatedUserData);
-        await LocalAuthService.updateUserProfile(updatedUserData);
-        console.log('=== LOCAL STORAGE SAVE COMPLETED ===');
+        console.log('❌ Could not find user to save as current user');
       }
+      
+      console.log('=== SAVE COMPLETED SUCCESSFULLY ===');
+      
+      // Verify the data was saved
+      const verifyString = await AsyncStorage.getItem('@tourist_app_current_user');
+      const verifyData = verifyString ? JSON.parse(verifyString) : null;
+      console.log('=== VERIFICATION ===');
+      console.log('Saved data verification:', verifyData);
+      console.log('=== END VERIFICATION ===');
 
-      console.log('=== PROFILE SAVE DEBUG END ===');
+      console.log('=== SAVE SUCCESS - NAVIGATING BACK ===');
+      console.log('Updated profile data:', profileData);
+      console.log('User data being passed:', {
+        ...userData,
+        fullName: profileData.name,
+        email: profileData.email,
+        phone: profileData.phone,
+        location: profileData.location,
+        avatar: profileData.avatar
+      });
 
       Alert.alert(
         'Profile Updated',
@@ -226,6 +315,8 @@ const EditProfileScreen = ({ navigation, route }) => {
               // Navigate back and trigger a refresh of the profile screen
               navigation.navigate('Profile', { 
                 refresh: true,
+                refreshProfile: true,
+                timestamp: Date.now(), // Add timestamp to force refresh
                 userData: {
                   ...userData,
                   fullName: profileData.name,
@@ -243,44 +334,97 @@ const EditProfileScreen = ({ navigation, route }) => {
       console.error('Profile save error:', error);
       Alert.alert(
         'Error', 
-        'Failed to update profile. Please try again.'
+        `Failed to update profile: ${error.message}. Please try again.`
       );
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Direct storage save method (fallback)
+  const directSaveToStorage = async (userData) => {
+    try {
+      console.log('=== DIRECT STORAGE SAVE ===');
+      
+      // Import AsyncStorage
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      
+      // Get existing users
+      const usersString = await AsyncStorage.getItem('@tourist_app_users');
+      const users = usersString ? JSON.parse(usersString) : [];
+      
+      // Find current user by email
+      const userIndex = users.findIndex(user => user.email === userData.email);
+      
+      if (userIndex !== -1) {
+        // Update existing user
+        users[userIndex] = { ...users[userIndex], ...userData };
+        console.log('Updated existing user at index:', userIndex);
+      } else {
+        // Create new user entry
+        const newUser = {
+          uid: Date.now().toString(),
+          email: userData.email,
+          ...userData,
+          createdAt: new Date().toISOString()
+        };
+        users.push(newUser);
+        console.log('Created new user entry');
+      }
+      
+      // Save users array
+      await AsyncStorage.setItem('@tourist_app_users', JSON.stringify(users));
+      
+      // Also save as current user
+      const currentUser = users.find(user => user.email === userData.email);
+      await AsyncStorage.setItem('@tourist_app_current_user', JSON.stringify(currentUser));
+      
+      console.log('✅ Direct storage save successful');
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Direct storage save failed:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   const convertImageToBase64 = async (uri) => {
     try {
-      console.log('Converting image to base64 for current user');
+      console.log('EditProfileScreen: Converting image to base64, URI:', uri);
       
       // Import the simple image service
       const SimpleImageService = require('../../services/image/SimpleImageService').default;
       
       // Convert to base64 using our simple service
+      console.log('EditProfileScreen: Calling SimpleImageService.convertToBase64...');
       const result = await SimpleImageService.convertToBase64(uri);
+      console.log('EditProfileScreen: SimpleImageService result:', result);
       
       if (result.success) {
-        console.log('Base64 conversion successful');
+        console.log('EditProfileScreen: Base64 conversion successful, length:', result.base64?.length);
         return result.base64;
       } else {
+        console.error('EditProfileScreen: Base64 conversion failed:', result.error);
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error('Base64 conversion error:', error);
+      console.error('EditProfileScreen: Base64 conversion error:', error);
       throw new Error(`Image processing failed: ${error.message}`);
     }
   };
 
   const pickImageFromGallery = async () => {
     try {
+      console.log('EditProfileScreen: pickImageFromGallery called');
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      console.log('EditProfileScreen: Gallery permission result:', permissionResult);
       
       if (permissionResult.granted === false) {
+        console.log('EditProfileScreen: Gallery permission denied');
         Alert.alert('Permission Required', 'Permission to access gallery is required!');
         return;
       }
 
+      console.log('EditProfileScreen: Launching image library...');
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: 'images',
         allowsEditing: true,
@@ -289,13 +433,74 @@ const EditProfileScreen = ({ navigation, route }) => {
         base64: false,
         exif: false,
       });
+      console.log('EditProfileScreen: Image library result:', result);
 
       if (!result.canceled && result.assets[0]) {
         setIsLoading(true);
         try {
           const base64Avatar = await convertImageToBase64(result.assets[0].uri);
           setProfileData({...profileData, avatar: base64Avatar});
-          Alert.alert('Success', 'Profile picture updated!');
+          
+          // Save directly to storage (works even when logged out)
+          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+          
+          // Get current user data
+          const currentUserString = await AsyncStorage.getItem('@tourist_app_current_user');
+          if (currentUserString) {
+            const currentUser = JSON.parse(currentUserString);
+            const updatedUser = {
+              ...currentUser,
+              avatar: base64Avatar,
+              avatar_url: base64Avatar,
+              updatedAt: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            
+            // Save updated user
+            await AsyncStorage.setItem('@tourist_app_current_user', JSON.stringify(updatedUser));
+            
+            // Also update in users array
+            const usersString = await AsyncStorage.getItem('@tourist_app_users');
+            if (usersString) {
+              const users = JSON.parse(usersString);
+              const userIndex = users.findIndex(user => user.email === currentUser.email);
+              if (userIndex !== -1) {
+                users[userIndex] = { ...users[userIndex], ...updatedUser };
+                await AsyncStorage.setItem('@tourist_app_users', JSON.stringify(users));
+              }
+            }
+          } else {
+            // No current user, create a temporary one
+            const tempUser = {
+              uid: Date.now().toString(),
+              email: profileData.email || 'guest@example.com',
+              name: profileData.name || 'Guest User',
+              avatar: base64Avatar,
+              avatar_url: base64Avatar,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            
+            await AsyncStorage.setItem('@tourist_app_current_user', JSON.stringify(tempUser));
+          }
+          
+          Alert.alert('Success', 'Profile picture updated!', [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Navigate back to Profile screen with refresh flag
+                navigation.navigate('Profile', { 
+                  refresh: true,
+                  refreshProfile: true,
+                  timestamp: Date.now(), // Add timestamp to force refresh
+                  userData: {
+                    ...userData,
+                    avatar: base64Avatar
+                  }
+                });
+              }
+            }
+          ]);
         } catch (error) {
           Alert.alert('Error', 'Failed to process image. Please try again.');
         } finally {
@@ -310,13 +515,17 @@ const EditProfileScreen = ({ navigation, route }) => {
 
   const pickImageFromCamera = async () => {
     try {
+      console.log('EditProfileScreen: pickImageFromCamera called');
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      console.log('EditProfileScreen: Camera permission result:', permissionResult);
       
       if (permissionResult.granted === false) {
+        console.log('EditProfileScreen: Camera permission denied');
         Alert.alert('Permission Required', 'Permission to access camera is required!');
         return;
       }
 
+      console.log('EditProfileScreen: Launching camera...');
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: 'images',
         allowsEditing: true,
@@ -325,13 +534,74 @@ const EditProfileScreen = ({ navigation, route }) => {
         base64: false,
         exif: false,
       });
+      console.log('EditProfileScreen: Camera result:', result);
 
       if (!result.canceled && result.assets[0]) {
         setIsLoading(true);
         try {
           const base64Avatar = await convertImageToBase64(result.assets[0].uri);
           setProfileData({...profileData, avatar: base64Avatar});
-          Alert.alert('Success', 'Profile picture updated!');
+          
+          // Save directly to storage (works even when logged out)
+          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+          
+          // Get current user data
+          const currentUserString = await AsyncStorage.getItem('@tourist_app_current_user');
+          if (currentUserString) {
+            const currentUser = JSON.parse(currentUserString);
+            const updatedUser = {
+              ...currentUser,
+              avatar: base64Avatar,
+              avatar_url: base64Avatar,
+              updatedAt: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            
+            // Save updated user
+            await AsyncStorage.setItem('@tourist_app_current_user', JSON.stringify(updatedUser));
+            
+            // Also update in users array
+            const usersString = await AsyncStorage.getItem('@tourist_app_users');
+            if (usersString) {
+              const users = JSON.parse(usersString);
+              const userIndex = users.findIndex(user => user.email === currentUser.email);
+              if (userIndex !== -1) {
+                users[userIndex] = { ...users[userIndex], ...updatedUser };
+                await AsyncStorage.setItem('@tourist_app_users', JSON.stringify(users));
+              }
+            }
+          } else {
+            // No current user, create a temporary one
+            const tempUser = {
+              uid: Date.now().toString(),
+              email: profileData.email || 'guest@example.com',
+              name: profileData.name || 'Guest User',
+              avatar: base64Avatar,
+              avatar_url: base64Avatar,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            
+            await AsyncStorage.setItem('@tourist_app_current_user', JSON.stringify(tempUser));
+          }
+          
+          Alert.alert('Success', 'Profile picture updated!', [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Navigate back to Profile screen with refresh flag
+                navigation.navigate('Profile', { 
+                  refresh: true,
+                  refreshProfile: true,
+                  timestamp: Date.now(), // Add timestamp to force refresh
+                  userData: {
+                    ...userData,
+                    avatar: base64Avatar
+                  }
+                });
+              }
+            }
+          ]);
         } catch (error) {
           Alert.alert('Error', 'Failed to process image. Please try again.');
         } finally {
@@ -345,12 +615,19 @@ const EditProfileScreen = ({ navigation, route }) => {
   };
 
   const handleChangeAvatar = () => {
+    console.log('EditProfileScreen: handleChangeAvatar called');
     Alert.alert(
       'Change Profile Picture',
       'Choose an option',
       [
-        { text: 'Camera', onPress: pickImageFromCamera },
-        { text: 'Gallery', onPress: pickImageFromGallery },
+        { text: 'Camera', onPress: () => {
+          console.log('EditProfileScreen: Camera option selected');
+          pickImageFromCamera();
+        }},
+        { text: 'Gallery', onPress: () => {
+          console.log('EditProfileScreen: Gallery option selected');
+          pickImageFromGallery();
+        }},
         { text: 'Cancel', style: 'cancel' }
       ]
     );
@@ -483,6 +760,7 @@ const EditProfileScreen = ({ navigation, route }) => {
           >
             <Text style={styles.saveButtonText}>Save</Text>
           </TouchableOpacity>
+          
         </View>
       </ScrollView>
 

@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TourMate Admin - Cebu Panel</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font and base colors */
+        body { 
+            font-family: "Inter", sans-serif; 
+            background-color: #f7f9fb; /* Light background */
+            color: #333;
+        }
+        
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f0f2f5; }
+        ::-webkit-scrollbar-thumb { background: #c5c5c5; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a5a5a5; }
+
+        /* Custom Focus Ring for Inputs (Light Mode) */
+        .focus-ring-light {
+            transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            border-color: #e5e7eb; /* Default light border */
+        }
+        .focus-ring-light:focus {
+            outline: none;
+            border-color: #2563eb; /* Blue-600 */
+            box-shadow: 0 0 0 1px #2563eb;
+        }
+
+        /* Enhanced Select Dropdown Styling */
+        select.focus-ring-light {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            appearance: none;
+            cursor: pointer;
+        }
+        
+        select.focus-ring-light:hover {
+            border-color: #9ca3af;
+        }
+        
+        select.focus-ring-light option {
+            padding: 0.5rem;
+            background-color: white;
+            color: #374151;
+        }
+
+        /* Success Animation */
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .success-animation {
+            animation: successPulse 0.6s ease-in-out;
+        }
+
+        /* Auto-refresh indicator */
+        .auto-refresh-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            z-index: 1000;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Image preview styling */
+        #image_url-preview img {
+            transition: opacity 0.3s ease;
+        }
+        
+        #image_url-preview img:hover {
+            opacity: 0.9;
+        }
+
+        /* Card image styling */
+        .content-card img {
+            transition: transform 0.3s ease;
+        }
+        
+        .content-card:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Styling for the horizontal navigation (Header) */
+        .top-nav {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .nav-link {
+            transition: all 0.2s;
+            color: #6b7280;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .nav-link.active-nav {
+            background-color: #e0f2ff; /* Light blue background */
+            color: #1d4ed8; /* Darker blue text */
+        }
+        .nav-link:hover {
+            background-color: #f3f4f6;
+        }
+        
+        /* Content Card Styling */
+        .content-card {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s;
+        }
+        .content-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+    </style>
+    <!-- Load Supabase client library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+    <!-- Main Application Container -->
+    <div id="app" class="min-h-screen flex flex-col">
+
+        <!-- Header (Horizontal Navigation) -->
+        <header id="header" class="top-nav w-full bg-white p-4 flex justify-between items-center sticky top-0 z-30 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-900">TourMate Admin</h1>
+            
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex space-x-2">
+                <a href="#dashboard" class="nav-link flex items-center" data-route="dashboard">
+                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l-2-2m-2 2v-1h3v3m-2-3v3m-2-3v3m2-3v3m-2-3v3m-2-3v3M9 21h6a1 1 0 001-1v-4a1 1 0 00-1-1h-2a1 1 0 00-1 1v4a1 1 0 001 1z"></path></svg>
+                    Dashboard
+                </a>
+                <a href="#users" class="nav-link flex items-center" data-route="users">
+                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20v-2M9 11A6 6 0 109 5a6 6 0 000 6zm0 0a6 6 0 100 0zM7 20h5v-2a3 3 0 00-3-3H4a3 3 0 00-3 3v2zM15 11h.01M19 11h.01"></path></svg>
+                    Users
+                </a>
+                <a href="#local_delicacies" class="nav-link flex items-center" data-route="local_delicacies">
+                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Delicacies
+                </a>
+                <a href="#destinations" class="nav-link flex items-center" data-route="destinations">
+                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Destinations
+                </a>
+                <!-- Other categories are hidden in the top nav for space, but can be added back -->
+            </nav>
+
+            <!-- User and Logout -->
+            <div class="flex items-center space-x-4">
+                <div id="connection-status" class="flex items-center space-x-2">
+                    <div id="status-indicator" class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                    <span id="status-text" class="text-xs text-gray-500">Connecting...</span>
+                </div>
+                <span id="user-display" class="text-sm font-semibold text-gray-500 hidden md:inline">Super Administrator</span>
+                <button onclick="confirmLogout()" id="logout-btn" class="flex items-center px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600 transition duration-150 text-white shadow-md focus-ring-light">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Wrapper -->
+        <main class="flex-1 p-6 md:p-10" id="main-content">
+            
+            <!-- Loading Spinner -->
+            <div id="loading" class="fixed inset-0 bg-gray-50/80 flex items-center justify-center z-50 hidden">
+                <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-xl text-blue-500">Loading...</span>
+            </div>
+
+            <!-- Content Placeholder -->
+            <div id="content-container" class="mt-8 md:mt-0">
+                <!-- Content will be injected here by JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Global Modal Structure (for Add/Edit/Confirm Forms) -->
+    <div id="modal-container" class="fixed inset-0 bg-gray-900/40 z-40 hidden items-center justify-center p-4">
+        <div id="modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 md:p-8 transform transition-all duration-300 scale-95 opacity-0 border border-gray-200">
+            <!-- Modal content will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        // ====================================================================
+        // 1. SUPABASE CLIENT & MOCK DATABASE SETUP
+        // ====================================================================
+        
+        const SUPABASE_URL = 'https://huzmuglxzkaztzxjerym.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1em11Z2x4emthenR6eGplcnltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTAwOTUsImV4cCI6MjA3MjYyNjA5NX0.Z4kYsI4OIOvMo1o8uKg6ckBpu2LDAA7q6iKReJUftHw';
+        
+        let isLoggedIn = false; 
+
+        // --- MOCK CORE DATA ---
+        let localDelicaciesData = [
+            { id: 'd1', name: 'Lechon Cebu', origin: 'Cebu', description: 'A whole pig, spit-roasted over an open charcoal fire, stuffed with local aromatic herbs and spices like lemongrass, garlic, and green onion.', is_active: true, created_at: new Date(Date.now() - 50000).toISOString() },
+            { id: 'd2', name: 'Puso (Hanging Rice)', origin: 'Cebu', description: 'Rice wrapped and boiled in woven coconut leaves.', is_active: false, created_at: new Date(Date.now() - 30000).toISOString() }
+        ];
+        let destinationsData = [
+            { id: 'dest1', name: 'Basilica del Santo Niño', location: 'Cebu City', description: 'The Basilica Minore del Santo Niño is the oldest Roman Catholic church in the Philippines.', is_active: true, created_at: new Date(Date.now() - 60000).toISOString() },
+            { id: 'dest2', name: 'Magellan’s Cross', location: 'Cebu City', description: 'Historical landmark of the arrival of Christianity.', is_active: true, created_at: new Date(Date.now() - 40000).toISOString() },
+            { id: 'dest3', name: 'Fort San Pedro', location: 'Cebu City', description: 'Fort San Pedro is the oldest fort in the Philippines. It was established in 1738 and serves as the sanctuary for the Santo Niño de Cebu.', is_active: true, created_at: new Date(Date.now() - 30000).toISOString() },
+        ];
+        let localSpotsData = [
+            { id: 'spot1', name: 'Sirao Flower Garden', location: 'Cebu City', description: 'Known as the Little Amsterdam of Cebu.', is_active: true, created_at: new Date(Date.now() - 70000).toISOString() },
+        ];
+        let hotelsData = [
+            { id: 'hotel1', name: 'Quest Hotel & Conference Center Cebu', city: 'Cebu City', stars: 4, description: 'Mid-range hotel near Ayala Center.', is_active: true, created_at: new Date(Date.now() - 80000).toISOString() },
+        ];
+        let restaurantsData = [
+            { id: 'rest1', name: 'Larsian', cuisine: 'Barbecue', description: 'Popular barbecue food court.', is_active: true, created_at: new Date(Date.now() - 90000).toISOString() },
+        ];
+        let eateriesData = [
+            { id: 'eatery1', name: 'Pungko-Pungko sa Fuente', cuisine: 'Fried Food', description: 'Famous roadside fried food stalls.', is_active: true, created_at: new Date(Date.now() - 100000).toISOString() },
+        ];
+        
+        // --- MOCK USER & PREFERENCE DATA ---
+        let usersData = [
+            { id: 'user1', email: 'admin@admin.com', name: 'Super Administrator', role: 'admin', phone: '+639171234567', location: 'Cebu City, Philippines', status: 'ACTIVE', created_at: new Date(Date.now() - 120000).toISOString() },
+            { id: 'user2', email: 'jovita@local.com', name: 'Jovita Local', role: 'contributor', phone: '+639171234568', location: 'Mandaue City, Philippines', status: 'ACTIVE', created_at: new Date(Date.now() - 90000).toISOString() },
+            { id: 'user3', email: 'tourist@visitor.com', name: 'New Visitor', role: 'viewer', phone: '+639171234569', location: 'Cebu City, Philippines', status: 'OFFLINE', created_at: new Date(Date.now() - 20000).toISOString() }
+        ];
+
+        let userPreferencesData = [
+            { user_id: 'user2', content_id: 'd1', type: 'local_delicacies', action: 'Loves' },
+            { user_id: 'user2', content_id: 'dest1', type: 'destinations', action: 'Visited' },
+            { user_id: 'user3', content_id: 'd2', type: 'local_delicacies', action: 'Likes' },
+            { user_id: 'user3', content_id: 'hotel1', type: 'hotels', action: 'Stayed At' },
+        ];
+
+
+        let supabase = {}; 
+        
+        // Define getStore function globally so it can be used everywhere
+        const getStore = (tableName) => {
+            if (tableName === 'local_delicacies') return localDelicaciesData;
+            if (tableName === 'destinations') return destinationsData;
+            if (tableName === 'local_spots') return localSpotsData;
+            if (tableName === 'hotels') return hotelsData;
+            if (tableName === 'restaurants') return restaurantsData;
+            if (tableName === 'eateries') return eateriesData;
+            if (tableName === 'users') return usersData; 
+            if (tableName === 'user_preferences') return userPreferencesData; 
+            return [];
+        };
+        
+        if (typeof window.supabase !== 'undefined' && SUPABASE_ANON_KEY !== 'YOUR_ANON_KEY_HERE') {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log("Using real Supabase client.");
+        } else {
+            console.warn("Using mock in-memory data. Please replace keys and uncomment the Supabase script tag.");
+
+            const mockApi = (tableName) => {
+                let dataStore = getStore(tableName);
+                
+                return {
+                    select: async () => {
+                        await new Promise(resolve => setTimeout(resolve, 500)); 
+                        const sortedData = [...dataStore].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                        return { data: JSON.parse(JSON.stringify(sortedData)), error: null };
+                    },
+                    insert: async (item) => {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        const newItem = { ...item, id: crypto.randomUUID(), created_at: new Date().toISOString() };
+                        dataStore.push(newItem);
+                        handleRouting(); 
+                        return { data: [newItem], error: null };
+                    },
+                    update: async (updates, id) => {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        const index = dataStore.findIndex(d => d.id === id);
+                        if (index !== -1) {
+                            // Only update non-null properties in the mock for simplicity
+                            dataStore[index] = { ...dataStore[index], ...updates };
+                            handleRouting();
+                            return { data: [dataStore[index]], error: null };
+                        }
+                        return { data: null, error: { message: 'Not Found' } };
+                    },
+                    delete: async (id) => {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        const initialLength = dataStore.length;
+                        
+                        // Mutate the global array directly based on table name
+                        if (tableName === 'local_delicacies') localDelicaciesData = localDelicaciesData.filter(d => d.id !== id);
+                        else if (tableName === 'destinations') destinationsData = destinationsData.filter(d => d.id !== id);
+                        else if (tableName === 'local_spots') localSpotsData = localSpotsData.filter(d => d.id !== id);
+                        else if (tableName === 'hotels') hotelsData = hotelsData.filter(d => d.id !== id);
+                        else if (tableName === 'restaurants') restaurantsData = restaurantsData.filter(d => d.id !== id);
+                        else if (tableName === 'eateries') eateriesData = eateriesData.filter(d => d.id !== id);
+                        else if (tableName === 'users') usersData = usersData.filter(d => d.id !== id); 
+
+                        if (getStore(tableName).length < initialLength) {
+                            handleRouting();
+                            return { data: true, error: null };
+                        }
+                        return { data: null, error: { message: 'Not Found' } };
+                    },
+                    on: () => ({ subscribe: () => {} }),
+                    eq: () => ({ select: () => this.select() })
+                };
+            };
+            
+            // Mock API for fallback
+            supabase.from = mockApi;
+            
+            // Mock auth for fallback
+            const mockAuth = {
+                signInWithPassword: async ({ email, password }) => {
+                    showLoading(true);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    if (email === 'admin@admin.com' && password === 'password') {
+                        isLoggedIn = true;
+                        return { data: { user: { id: 'mock-user-id', email } }, error: null };
+                    }
+                    showLoading(false);
+                    return { data: null, error: { message: 'Invalid credentials or user not found.' } };
+                },
+                signOut: async () => {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    isLoggedIn = false;
+                    return { error: null };
+                }
+            };
+            
+            supabase.auth = mockAuth;
+        }
+
+        // ====================================================================
+        // 2. CORE UTILITY FUNCTIONS
+        // ====================================================================
+
+        const $ = selector => document.querySelector(selector);
+        const $$ = selector => document.querySelectorAll(selector);
+        
+        // Image preview function
+        window.previewImage = (url, previewId) => {
+            const preview = document.getElementById(previewId);
+            const img = document.getElementById(previewId.replace('-preview', '-img'));
+            
+            if (url && url.trim() !== '') {
+                img.src = url;
+                preview.classList.remove('hidden');
+            } else {
+                preview.classList.add('hidden');
+            }
+        };
+
+        // Opening hours dropdown handler
+        window.handleOpeningHoursChange = (selectElement) => {
+            const customDiv = document.getElementById('opening_hours-custom');
+            const customInput = document.getElementById('opening_hours-custom-input');
+            
+            if (selectElement.value === 'Custom Hours') {
+                customDiv.classList.remove('hidden');
+                customInput.focus();
+            } else {
+                customDiv.classList.add('hidden');
+                if (customInput) {
+                    customInput.value = '';
+                }
+            }
+        };
+        
+        const showLoading = (show = true) => {
+            $('#loading').classList.toggle('hidden', !show);
+            $('#main-content').classList.toggle('opacity-50', show);
+        };
+
+        const showToast = (message, isError = false) => {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 p-4 rounded-lg shadow-xl transition-all duration-300 text-white ${isError ? 'bg-red-500' : 'bg-green-500'} opacity-100 z-50`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 3000);
+        };
+
+        const updateConnectionStatus = (status, message) => {
+            const indicator = $('#status-indicator');
+            const text = $('#status-text');
+            
+            if (status === 'connected') {
+                indicator.className = 'w-2 h-2 rounded-full bg-green-500';
+                text.textContent = 'Connected to Supabase';
+            } else if (status === 'error') {
+                indicator.className = 'w-2 h-2 rounded-full bg-red-500';
+                text.textContent = 'Using sample data';
+            } else {
+                indicator.className = 'w-2 h-2 rounded-full bg-yellow-500';
+                text.textContent = message || 'Connecting...';
+            }
+        };
+
+        const customConfirm = (message, onConfirm, itemType) => {
+            modal.content.innerHTML = `
+                <div class="flex flex-col items-center p-4">
+                    <svg class="w-12 h-12 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Confirm Deletion</h3>
+                    <p class="text-gray-600 text-center mb-6">${message}</p>
+                    <div class="flex justify-end space-x-3 w-full">
+                        <button type="button" onclick="modal.hide()" class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition duration-150 font-semibold focus-ring-light">Cancel</button>
+                        <button type="button" id="confirm-action-btn" class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 transition duration-150 font-semibold text-white focus-ring-light transform hover:scale-[1.02]">
+                            Yes, Delete ${itemType.toUpperCase()}
+                        </button>
+                    </div>
+                </div>
+            `;
+            $('#confirm-action-btn').addEventListener('click', () => {
+                modal.hide();
+                onConfirm();
+            });
+            modal.show();
+        };
+
+        const getItemNameById = (id, type) => {
+            let dataStore = [];
+            if (type === 'local_delicacies') dataStore = localDelicaciesData;
+            else if (type === 'destinations') dataStore = destinationsData;
+            else if (type === 'local_spots') dataStore = localSpotsData;
+            else if (type === 'hotels') dataStore = hotelsData;
+            else if (type === 'restaurants') dataStore = restaurantsData;
+            else if (type === 'eateries') dataStore = eateriesData;
+            const item = dataStore.find(d => d.id === id);
+            return item ? item.name : 'Unknown Content';
+        };
+
+
+        // ====================================================================
+        // 3. MODAL AND FORM HANDLING
+        // ====================================================================
+
+        const modal = {
+            container: $('#modal-container'),
+            content: $('#modal-content'),
+            show: () => {
+                modal.container.classList.remove('hidden');
+                modal.container.classList.add('flex');
+                setTimeout(() => {
+                    modal.content.classList.remove('scale-95', 'opacity-0');
+                }, 10);
+            },
+            hide: () => {
+                modal.content.classList.add('scale-95', 'opacity-0');
+                modal.content.addEventListener('transitionend', () => {
+                    modal.container.classList.remove('flex');
+                    modal.container.classList.add('hidden');
+                    modal.content.innerHTML = ''; 
+                }, { once: true });
+            },
+            renderForm: (type, item = {}) => {
+                const isEdit = !!item.id;
+                const endpoint = type;
+                const title = `${isEdit ? 'Edit' : 'Add'} ${type.replace(/_/g, ' ').slice(0, -1)}`;
+
+                let fields = [];
+                
+                // Base fields
+                fields.push({ id: 'name', label: 'Name', type: 'text', required: true });
+                fields.push({ id: 'category', label: 'Category', type: 'select', options: ['Cultural', 'Natural', 'Food/Beverage', 'Lodging', 'Religious'], required: true });
+                fields.push({ 
+                    id: 'location', 
+                    label: 'Location / City', 
+                    type: 'select', 
+                    required: true,
+                    options: [
+                        'Cebu City',
+                        'Mandaue City',
+                        'Lapu-Lapu City',
+                        'Talisay City',
+                        'Minglanilla',
+                        'Naga City',
+                        'Carcar City',
+                        'San Fernando',
+                        'Sibonga',
+                        'Argao',
+                        'Dalaguete',
+                        'Alcoy',
+                        'Boljoon',
+                        'Oslob',
+                        'Santander',
+                        'Samboan',
+                        'Malabuyoc',
+                        'Ginatilan',
+                        'Alegria',
+                        'Badian',
+                        'Moalboal',
+                        'Alcantara',
+                        'Ronda',
+                        'Dumanjug',
+                        'Barili',
+                        'Tuburan',
+                        'Asturias',
+                        'Balamban',
+                        'Toledo City',
+                        'Pinamungajan',
+                        'Aloguinsan',
+                        'Compostela',
+                        'Liloan',
+                        'Consolacion',
+                        'Cordova',
+                        'Bantayan Island',
+                        'Santa Fe',
+                        'Madridejos',
+                        'Camotes Islands',
+                        'Poro',
+                        'Tudela',
+                        'San Francisco',
+                        'Pilar',
+                        'Tabogon',
+                        'Borbon',
+                        'Sogod',
+                        'Catmon',
+                        'Carmen',
+                        'Danao City',
+                        'Bantayan',
+                        'Medellin',
+                        'Daanbantayan',
+                        'Maya',
+                        'San Remigio',
+                        'Bogo City'
+                    ]
+                });
+                fields.push({ id: 'description', label: 'Description', type: 'textarea', rows: 4, required: false });
+                fields.push({ id: 'image_url', label: 'Image URL', type: 'url', required: false, placeholder: 'https://example.com/image.jpg' });
+                fields.push({ id: 'featured', label: 'Featured Destination', type: 'checkbox', required: false });
+                fields.push({ 
+                    id: 'opening_hours', 
+                    label: 'Opening Hours', 
+                    type: 'select', 
+                    required: false,
+                    options: [
+                        '24 Hours',
+                        '6:00 AM - 10:00 PM',
+                        '7:00 AM - 9:00 PM',
+                        '8:00 AM - 8:00 PM',
+                        '9:00 AM - 6:00 PM',
+                        '10:00 AM - 10:00 PM',
+                        '11:00 AM - 11:00 PM',
+                        '12:00 PM - 12:00 AM',
+                        'Mon-Fri 8:00 AM - 5:00 PM',
+                        'Mon-Sat 9:00 AM - 6:00 PM',
+                        'Mon-Sun 8:00 AM - 8:00 PM',
+                        'Tue-Sun 9:00 AM - 9:00 PM',
+                        'Wed-Mon 10:00 AM - 10:00 PM',
+                        'Closed on Mondays',
+                        'Weekends Only',
+                        'By Appointment Only',
+                        'Seasonal Hours',
+                        'Custom Hours'
+                    ]
+                });
+                fields.push({ id: 'contact_number', label: 'Contact Number', type: 'text', required: false, placeholder: '+639xxxxxxxxx' });
+
+                // Adjustments for specific types
+                if (type === 'users') {
+                    fields = [
+                        { id: 'name', label: 'Full Name', type: 'text', required: true },
+                        { id: 'email', label: 'Email', type: 'email', required: true, disabled: true },
+                        { id: 'role', label: 'User Role', type: 'text', required: false }
+                    ];
+                } else if (type === 'local_delicacies') {
+                    // For delicacies, rename location to origin and remove hours/contact but keep image_url
+                    fields[2].id = 'origin';
+                    fields[2].label = 'Origin (City/Town)';
+                    // Remove opening_hours and contact_number but keep image_url
+                    fields = fields.filter(field => field.id !== 'opening_hours' && field.id !== 'contact_number');
+                }
+                
+                let formFields = fields.map(field => {
+                    const value = item[field.id] !== undefined ? item[field.id] : '';
+                    const disabledAttr = field.disabled ? 'disabled' : '';
+                    const placeholder = field.placeholder || `Enter ${field.label.toLowerCase()}`;
+                    const inputClasses = `mt-1 block w-full rounded-lg border border-gray-300 bg-gray-50 text-gray-800 focus-ring-light p-3 ${disabledAttr ? 'bg-gray-200 cursor-not-allowed' : ''}`;
+
+                    if (field.type === 'textarea') {
+                        return `
+                            <div class="mb-4">
+                                <label for="${field.id}" class="block text-sm font-medium text-gray-700">${field.label}</label>
+                                <textarea id="${field.id}" name="${field.id}" rows="${field.rows}" ${disabledAttr} class="${inputClasses}" placeholder="${placeholder}">${value}</textarea>
+                            </div>
+                        `;
+                    } else if (field.type === 'select') {
+                        const placeholderText = field.id === 'category' ? 'Select Category' : 
+                                             field.id === 'location' || field.id === 'origin' ? 'Select Location' : 
+                                             'Select Option';
+                        return `
+                            <div class="mb-4">
+                                <label for="${field.id}" class="block text-sm font-medium text-gray-700">${field.label}</label>
+                                <select id="${field.id}" name="${field.id}" ${field.required ? 'required' : ''} ${disabledAttr} class="${inputClasses}">
+                                    <option value="">${placeholderText}</option>
+                                    ${field.options.map(opt => `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                                </select>
+                            </div>
+                        `;
+                    } else if (field.type === 'url' && field.id === 'image_url') {
+                        const hasExistingImage = value && value.trim() !== '';
+                        return `
+                            <div class="mb-4">
+                                <label for="${field.id}" class="block text-sm font-medium text-gray-700">${field.label}</label>
+                                <input type="${field.type}" id="${field.id}" name="${field.id}" ${field.required ? 'required' : ''} ${disabledAttr} class="${inputClasses}" value="${value}" placeholder="${placeholder}" oninput="previewImage(this.value, '${field.id}-preview')">
+                                <p class="mt-1 text-xs text-gray-500">Enter a direct image URL (e.g., https://example.com/image.jpg)</p>
+                                <div id="${field.id}-preview" class="mt-2 ${hasExistingImage ? '' : 'hidden'}">
+                                    <img id="${field.id}-img" src="${value || ''}" alt="Image preview" class="w-full h-48 object-cover rounded-lg border border-gray-300" onerror="this.parentElement.classList.add('hidden')">
+                                </div>
+                            </div>
+                        `;
+                    } else if (field.type === 'select' && field.id === 'opening_hours') {
+                        const placeholderText = `Select ${field.label}`;
+                        const isCustomValue = value && !field.options.includes(value);
+                        const selectedValue = isCustomValue ? 'Custom Hours' : value;
+                        return `
+                            <div class="mb-4">
+                                <label for="${field.id}" class="block text-sm font-medium text-gray-700">${field.label}</label>
+                                <select id="${field.id}" name="${field.id}" ${field.required ? 'required' : ''} ${disabledAttr} class="${inputClasses}" onchange="handleOpeningHoursChange(this)">
+                                    <option value="">${placeholderText}</option>
+                                    ${field.options.map(opt => `<option value="${opt}" ${selectedValue === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                                </select>
+                                <div id="${field.id}-custom" class="mt-2 ${isCustomValue ? '' : 'hidden'}">
+                                    <input type="text" id="${field.id}-custom-input" name="${field.id}-custom" class="${inputClasses}" placeholder="Enter custom hours (e.g., Mon-Fri 9:00 AM - 5:00 PM)" value="${isCustomValue ? value : ''}">
+                                </div>
+                            </div>
+                        `;
+                    } else if (field.type === 'checkbox') {
+                        const checkedAttr = value === true || value === 'true' || value === 1 ? 'checked' : '';
+                        return `
+                            <div class="mb-4">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="${field.id}" name="${field.id}" ${field.required ? 'required' : ''} ${disabledAttr} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" ${checkedAttr}>
+                                    <label for="${field.id}" class="ml-2 block text-sm font-medium text-gray-700">${field.label}</label>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        return `
+                            <div class="mb-4">
+                                <label for="${field.id}" class="block text-sm font-medium text-gray-700">${field.label}</label>
+                                <input type="${field.type}" id="${field.id}" name="${field.id}" ${field.required ? 'required' : ''} ${disabledAttr} class="${inputClasses}" value="${value}" placeholder="${placeholder}">
+                            </div>
+                        `;
+                    }
+                }).join('');
+
+                modal.content.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">${title}</h2>
+                        <button onclick="modal.hide()" class="text-gray-500 hover:text-gray-700 transition duration-150 p-2 rounded-full hover:bg-gray-100">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <form id="${endpoint}-form">
+                        ${formFields}
+                        <div class="flex justify-end space-x-3 mt-6">
+                            <button type="button" onclick="modal.hide()" class="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400 transition duration-150 font-semibold focus-ring-light text-gray-700">Cancel</button>
+                            ${isEdit ? 
+                                `<button type="submit" id="submit-btn" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-150 font-semibold text-white focus-ring-light shadow-md shadow-blue-500/50">
+                                    <span id="submit-text">Save Changes</span>
+                                    <svg id="submit-spinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </button>` : 
+                                endpoint === 'users' ? '' : `<button type="submit" id="submit-btn" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-150 font-semibold text-white focus-ring-light shadow-md shadow-blue-500/50">
+                                    <span id="submit-text">Add Item</span>
+                                    <svg id="submit-spinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </button>`
+                            }
+                        </div>
+                    </form>
+                `;
+
+                $('#' + endpoint + '-form').addEventListener('submit', (e) => modal.handleSubmit(e, endpoint, isEdit, item.id));
+                modal.show();
+            },
+
+            handleSubmit: async (e, endpoint, isEdit, id) => {
+                e.preventDefault();
+                showLoading(true);
+                
+                // Set button loading state
+                const submitBtn = $('#submit-btn');
+                const submitText = $('#submit-text');
+                const submitSpinner = $('#submit-spinner');
+                
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    if (submitText) submitText.textContent = isEdit ? 'Saving...' : 'Adding...';
+                    if (submitSpinner) submitSpinner.classList.remove('hidden');
+                }
+
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                
+                // Handle custom opening hours
+                if (data.opening_hours === 'Custom Hours') {
+                    const customInput = $('#opening_hours-custom-input');
+                    if (customInput && customInput.value.trim() !== '') {
+                        data.opening_hours = customInput.value.trim();
+                    }
+                }
+                
+                // Handle checkbox values (convert to boolean)
+                if (data.featured !== undefined) {
+                    data.featured = data.featured === 'on' || data.featured === true;
+                }
+                
+                let response;
+                let successMessage;
+
+                try {
+                    const updates = Object.keys(data).reduce((acc, key) => {
+                        // Use a safer check since element might not exist
+                        const inputElement = $(`#${key}`);
+                        if (inputElement && inputElement.disabled !== true) {
+                            acc[key] = data[key];
+                        }
+                        return acc;
+                    }, {});
+
+                    if (isEdit) {
+                        response = await supabase.from(endpoint).update(updates).eq('id', id);
+                        successMessage = `${endpoint.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} updated successfully!`;
+                    } else {
+                        response = await supabase.from(endpoint).insert(data);
+                        successMessage = `${endpoint.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} added successfully!`;
+                    }
+
+                    if (response.error) {
+                        showToast(`Error: ${response.error.message}`, true);
+                        // Reset button state on error
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            if (submitText) submitText.textContent = isEdit ? 'Save Changes' : 'Add Item';
+                            if (submitSpinner) submitSpinner.classList.add('hidden');
+                        }
+                    } else {
+                        showToast(successMessage);
+                        // Close modal immediately on success
+                        modal.hide();
+                        
+                        // Show auto-refresh indicator
+                        const refreshIndicator = document.createElement('div');
+                        refreshIndicator.className = 'auto-refresh-indicator';
+                        refreshIndicator.innerHTML = `
+                            <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Auto-refreshing data & syncing to app...
+                        `;
+                        document.body.appendChild(refreshIndicator);
+                        
+                        // Auto-refresh the current view after successful save
+                        setTimeout(() => {
+                            handleRouting();
+                            // Remove refresh indicator after routing
+                            setTimeout(() => {
+                                if (refreshIndicator.parentNode) {
+                                    refreshIndicator.parentNode.removeChild(refreshIndicator);
+                                }
+                                // Show final success message
+                                showToast('✅ Data saved and synced to user app!', false);
+                            }, 1000);
+                        }, 1500); // Small delay to show the success message and refresh notification
+                    }
+                } catch (error) {
+                    showToast(`An unexpected error occurred: ${error.message}`, true);
+                    // Reset button state on error
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        if (submitText) submitText.textContent = isEdit ? 'Save Changes' : 'Add Item';
+                        if (submitSpinner) submitSpinner.classList.add('hidden');
+                    }
+                } finally {
+                    showLoading(false);
+                }
+            }
+        };
+
+        // ====================================================================
+        // 4. AUTHENTICATION VIEWS AND HANDLERS
+        // ====================================================================
+
+        const renderLoginView = () => {
+            document.body.classList.add('bg-gray-100');
+            document.body.classList.remove('bg-gray-50');
+            
+            contentContainer.innerHTML = `
+                <div class="flex items-center justify-center min-h-screen">
+                    <div class="w-full max-w-sm bg-white p-10 rounded-xl shadow-lg border border-gray-200">
+                        <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">TourMate Admin</h2>
+                        <p class="text-center text-sm text-gray-500 mb-8">Sign in to manage your Cebu content</p>
+                        
+                        
+                        <!-- Error Message Container -->
+                        <div id="login-error-message" class="hidden mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="font-medium" id="error-text">Invalid credentials</span>
+                            </div>
+                        </div>
+                        
+                        <form id="login-form" novalidate>
+                            <div class="mb-4">
+                                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                                <input type="email" id="email" name="email" required value="admin@admin.com" class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus-ring-light p-3" placeholder="admin@admin.com">
+                                <div id="email-error" class="hidden mt-1 text-sm text-red-600"></div>
+                            </div>
+                            <div class="mb-6">
+                                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                                <input type="password" id="password" name="password" required value="password" class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus-ring-light p-3" placeholder="password">
+                                <div id="password-error" class="hidden mt-1 text-sm text-red-600"></div>
+                            </div>
+                            <button type="submit" id="login-btn" class="w-full py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-150 font-bold text-white shadow-md shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span id="login-btn-text">Log In</span>
+                                <svg id="login-spinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </button>
+                            <p class="text-center text-xs text-gray-500 mt-4">Demo credentials: admin@admin.com / password</p>
+                        </form>
+                    </div>
+                </div>
+            `;
+            $('#login-form').addEventListener('submit', handleLogin);
+            
+            // Add real-time validation
+            $('#email').addEventListener('blur', validateEmail);
+            $('#password').addEventListener('blur', validatePassword);
+            $('#email').addEventListener('input', clearFieldError);
+            $('#password').addEventListener('input', clearFieldError);
+            
+            $('#header').classList.add('hidden');
+            $('#app').classList.add('logged-out');
+        };
+
+        // Validation functions
+        const validateEmail = (e) => {
+            const email = e.target.value.trim();
+            const emailError = $('#email-error');
+            const emailInput = $('#email');
+            
+            if (!email) {
+                showFieldError(emailInput, emailError, 'Email is required');
+                return false;
+            }
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showFieldError(emailInput, emailError, 'Please enter a valid email address');
+                return false;
+            }
+            
+            clearFieldError(e);
+            return true;
+        };
+
+        const validatePassword = (e) => {
+            const password = e.target.value;
+            const passwordError = $('#password-error');
+            const passwordInput = $('#password');
+            
+            if (!password) {
+                showFieldError(passwordInput, passwordError, 'Password is required');
+                return false;
+            }
+            
+            if (password.length < 6) {
+                showFieldError(passwordInput, passwordError, 'Password must be at least 6 characters long');
+                return false;
+            }
+            
+            clearFieldError(e);
+            return true;
+        };
+
+        const showFieldError = (input, errorElement, message) => {
+            input.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+            input.classList.remove('border-gray-300', 'focus:border-blue-600', 'focus:ring-blue-600');
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        };
+
+        const clearFieldError = (e) => {
+            const input = e.target;
+            const errorElement = $(`#${input.id}-error`);
+            
+            input.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+            input.classList.add('border-gray-300', 'focus:border-blue-600', 'focus:ring-blue-600');
+            errorElement.classList.add('hidden');
+        };
+
+        const hideAllMessages = () => {
+            $('#login-error-message').classList.add('hidden');
+        };
+
+        const showErrorMessage = (message) => {
+            hideAllMessages();
+            $('#error-text').textContent = message;
+            $('#login-error-message').classList.remove('hidden');
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                $('#login-error-message').classList.add('hidden');
+            }, 5000);
+        };
+
+        const setLoginButtonState = (loading) => {
+            const btn = $('#login-btn');
+            const btnText = $('#login-btn-text');
+            const spinner = $('#login-spinner');
+            
+            if (loading) {
+                btn.disabled = true;
+                btnText.textContent = 'Signing in...';
+                spinner.classList.remove('hidden');
+            } else {
+                btn.disabled = false;
+                btnText.textContent = 'Log In';
+                spinner.classList.add('hidden');
+            }
+        };
+
+        const handleLogin = async (e) => {
+            e.preventDefault();
+            
+            // Clear previous messages
+            hideAllMessages();
+            
+            // Validate form fields
+            const emailValid = validateEmail({ target: $('#email') });
+            const passwordValid = validatePassword({ target: $('#password') });
+            
+            if (!emailValid || !passwordValid) {
+                showErrorMessage('Please fix the errors above before submitting');
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            const email = formData.get('email');
+            const password = formData.get('password');
+
+            setLoginButtonState(true);
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                
+                if (error) {
+                    setLoginButtonState(false);
+                    showErrorMessage(error.message || 'Invalid credentials. Please try again.');
+                } else if (data.user) {
+                    isLoggedIn = true;
+                    // Redirect immediately after successful login
+                    window.location.hash = '#dashboard';
+                    handleRouting();
+                }
+            } catch (error) {
+                setLoginButtonState(false);
+                showErrorMessage('Login failed: ' + error.message);
+            }
+        };
+        
+        // Logout confirmation function
+        window.confirmLogout = () => {
+            modal.content.innerHTML = `
+                <div class="flex flex-col items-center p-4">
+                    <svg class="w-12 h-12 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Confirm Logout</h3>
+                    <p class="text-gray-600 text-center mb-6">Are you sure you want to logout? You will need to sign in again to access the admin panel.</p>
+                    <div class="flex justify-end space-x-3 w-full">
+                        <button type="button" onclick="modal.hide()" class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition duration-150 font-semibold focus-ring-light">Cancel</button>
+                        <button type="button" id="confirm-logout-btn" class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 transition duration-150 font-semibold text-white focus-ring-light transform hover:scale-[1.02]">
+                            Yes, Logout
+                        </button>
+                    </div>
+                </div>
+            `;
+            $('#confirm-logout-btn').addEventListener('click', () => {
+                modal.hide();
+                handleLogout();
+            });
+            modal.show();
+        };
+
+        window.handleLogout = async () => {
+            showLoading(true);
+            try {
+                const { error } = await supabase.auth.signOut();
+                showLoading(false);
+                if (error) {
+                    showToast('Error during logout.', true);
+                } else {
+                    isLoggedIn = false;
+                    showToast('Logged out successfully.');
+                    window.location.hash = '#login';
+                    handleRouting();
+                }
+            } catch (error) {
+                showLoading(false);
+                showToast('Logout failed: ' + error.message, true);
+            }
+        };
+
+
+        // ====================================================================
+        // 5. VIEW RENDERING FUNCTIONS (Client-Side Router)
+        // ====================================================================
+
+        const contentContainer = $('#content-container');
+        
+        const getAggregatedData = () => [
+            ...localDelicaciesData,
+            ...destinationsData,
+            ...localSpotsData,
+            ...hotelsData,
+            ...restaurantsData,
+            ...eateriesData
+        ];
+
+        const renderDashboard = () => {
+            const data = getAggregatedData();
+            const counts = {
+                users: usersData.length,
+                active_users: usersData.filter(u => u.status === 'ACTIVE').length,
+                destinations: destinationsData.length,
+                local_delicacies: localDelicaciesData.length,
+                local_spots: localSpotsData.length,
+                hotels: hotelsData.length,
+                restaurants: restaurantsData.length,
+                eateries: eateriesData.length
+            };
+            
+            contentContainer.innerHTML = `
+                <div class="mb-10">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-1">Welcome back, Super Administrator!</h2>
+                    <p class="text-gray-500">Here's What's Happening with your tourist app today</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                    <!-- Dashboard Stat Cards (Matching image_601099.png style) -->
+                    ${[
+                        { key: 'Total Users', count: counts.users, color: 'blue', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20v-2M9 11A6 6 0 109 5a6 6 0 000 6zm0 0a6 6 0 100 0zM7 20h5v-2a3 3 0 00-3-3H4a3 3 0 00-3 3v2zM15 11h.01M19 11h.01' },
+                        { key: 'Active Users', count: counts.active_users, color: 'green', icon: 'M5 13l4 4L19 7' },
+                        { key: 'Destinations', count: counts.destinations, color: 'orange', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.244-4.243a8 8 0 1111.314 0z' },
+                        { key: 'Delicacies', count: counts.local_delicacies, color: 'red', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' }
+                    ].map(stat => `
+                        <div class="bg-white p-4 rounded-xl shadow-md border-t-4 border-${stat.color}-500 flex items-center justify-between content-card">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-3 bg-${stat.color}-100 rounded-full">
+                                    <svg class="w-6 h-6 text-${stat.color}-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${stat.icon}"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-500">${stat.key}</p>
+                                    <p class="text-xl font-bold text-gray-900">${stat.count}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- Popular Lists -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Popular Destinations Mock List -->
+                    <div class="bg-white p-6 rounded-xl content-card">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.049 2.927c.3-.921 1.62-.921 1.92 0l2.36 7.275 7.663.557c.995.072 1.398 1.282.645 1.956l-5.88 5.127 1.764 7.212c.264 1.077-.923 1.942-1.84 1.325L10 18.271l-6.551 4.545c-.917.617-2.104-.248-1.84-1.325l1.764-7.212-5.88-5.127c-.753-.674-.35-1.884.645-1.956l7.663-.557 2.36-7.275z"></path></svg>
+                            Popular Destinations
+                        </h3>
+                        <ul class="space-y-4">
+                            ${destinationsData.slice(0, 5).map((d, index) => `
+                                <li class="pb-2 border-b border-gray-100">
+                                    <p class="font-semibold text-gray-700">${index + 1}. ${d.name}</p>
+                                    <span class="text-xs text-gray-500">${d.location} - Cultural</span>
+                                    <span class="float-right text-xs text-yellow-500">★ 4.8 (10 Reviews)</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+
+                    <!-- Popular Delicacies Mock List -->
+                    <div class="bg-white p-6 rounded-xl content-card">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.049 2.927c.3-.921 1.62-.921 1.92 0l2.36 7.275 7.663.557c.995.072 1.398 1.282.645 1.956l-5.88 5.127 1.764 7.212c.264 1.077-.923 1.942-1.84 1.325L10 18.271l-6.551 4.545c-.917.617-2.104-.248-1.84-1.325l1.764-7.212-5.88-5.127c-.753-.674-.35-1.884.645-1.956l7.663-.557 2.36-7.275z"></path></svg>
+                            Popular Delicacies
+                        </h3>
+                        <ul class="space-y-4">
+                            ${localDelicaciesData.slice(0, 5).map((d, index) => `
+                                <li class="pb-2 border-b border-gray-100">
+                                    <p class="font-semibold text-gray-700">${index + 1}. ${d.name}</p>
+                                    <span class="text-xs text-gray-500">${d.origin} - Food/Beverage</span>
+                                    <span class="float-right text-xs text-yellow-500">★ 4.9 (5 Reviews)</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        };
+
+        // Renders content in a grid of cards instead of a traditional table
+        const createCardMarkup = (data, endpoint) => {
+            const titleCase = (str) => str.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            if (data.length === 0) {
+                return `<p class="text-center text-gray-500 p-8 bg-white rounded-lg shadow-md border border-gray-200">No ${titleCase(endpoint)} found. Start by adding one!</p>`;
+            }
+
+            return `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${data.map(item => {
+                        const description = item.description || 'No description provided.';
+                        const truncatedDescription = description.length > 100 ? description.substring(0, 100) + '...' : description;
+                        const mainAttribute = item.location || item.origin || item.city || item.cuisine || 'Cebu';
+                        
+                        const imageUrl = item.image_url || item.image?.uri || '';
+                        const hasImage = imageUrl && imageUrl.trim() !== '';
+                        
+                        return `
+                            <div class="bg-white rounded-xl content-card flex flex-col justify-between overflow-hidden">
+                                ${hasImage ? `
+                                    <div class="h-48 w-full overflow-hidden">
+                                        <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover" onerror="this.parentElement.style.display='none'">
+                                    </div>
+                                ` : ''}
+                                <div class="p-4 flex flex-col justify-between flex-1">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900 mb-1">${item.name}</h3>
+                                        <p class="text-xs text-gray-500 mb-3">${mainAttribute}</p>
+                                        <p class="text-sm text-gray-700 mb-4">${truncatedDescription}</p>
+                                    </div>
+                                    <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+                                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${item.is_active ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
+                                            ${item.is_active ? 'Active' : 'Inactive'}
+                                        </span>
+                                        <div class="flex space-x-2">
+                                            <button onclick="editItem('${endpoint}', '${item.id}')" class="text-blue-500 hover:text-blue-700 transition duration-150 p-1 rounded-full hover:bg-blue-50 focus-ring-light" title="Edit">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </button>
+                                            <button onclick="deleteItem('${endpoint}', '${item.id}', '${item.name}')" class="text-red-500 hover:text-red-700 transition duration-150 p-1 rounded-full hover:bg-red-50 focus-ring-light" title="Delete">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        };
+        
+        // Renders content in a table (kept for Users only)
+        const createTableMarkup = (data, endpoint, preferences = []) => {
+            if (data.length === 0) {
+                return `<p class="text-center text-gray-500 p-8 bg-white rounded-lg shadow-md border border-gray-200">No ${endpoint.replace(/_/g, ' ')} found.</p>`;
+            }
+
+            const headerMap = {
+                users: ['USER', 'EMAIL', 'PHONE', 'LOCATION', 'STATUS', 'REGISTERED', 'ACTIONS'], 
+            };
+            const headers = headerMap[endpoint] || ['Name', 'Description', 'Created At', 'Actions'];
+            
+            const tableRows = data.map(item => {
+                let actionButtons = `
+                    <button onclick="editItem('${endpoint}', '${item.id}')" class="text-blue-500 hover:text-blue-700 transition duration-150 p-1 rounded-full hover:bg-blue-50 focus-ring-light" title="Edit">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </button>
+                    ${item.id !== 'user1' ? `
+                        <button onclick="deleteItem('${endpoint}', '${item.id}', '${item.name}')" class="text-red-500 hover:text-red-700 transition duration-150 p-1 rounded-full hover:bg-red-50 focus-ring-light" title="Delete">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    ` : `<span class="text-xs text-gray-400">Core</span>`}
+                `;
+                
+                // User-specific columns
+                const columns = [
+                    item.name, 
+                    item.email, 
+                    item.phone || 'N/A', 
+                    item.location || 'N/A',
+                    `<span class="px-2 py-1 text-xs font-semibold rounded-full ${item.status === 'ACTIVE' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${item.status}</span>`,
+                    new Date(item.created_at).toLocaleDateString()
+                ];
+
+                return `
+                    <tr class="border-b border-gray-200 hover:bg-gray-50 transition duration-150">
+                        ${columns.map(c => `<td class="px-6 py-4 text-sm text-gray-600">${c}</td>`).join('')}
+                        <td class="px-6 py-4 flex space-x-2">${actionButtons}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            return `
+                <div class="overflow-x-auto relative rounded-xl shadow-md border border-gray-200 bg-white">
+                    <table class="w-full text-sm text-left text-gray-600">
+                        <thead class="text-xs uppercase bg-gray-100 text-gray-600">
+                            <tr>
+                                ${headers.map(h => `<th scope="col" class="px-6 py-3">${h}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        };
+
+
+        const renderManagementView = async (endpoint, title) => {
+            showLoading();
+            const totalItems = getStore(endpoint).length;
+            
+            // Add timeout to prevent infinite loading
+            const timeoutId = setTimeout(() => {
+                showLoading(false);
+                showToast('Request timed out. Using sample data.', true);
+                const mockData = getStore(endpoint);
+                const mockPreferences = endpoint === 'users' ? userPreferencesData : [];
+                
+                if (endpoint === 'users') {
+                    $('#' + endpoint + '-list').innerHTML = createTableMarkup(mockData, endpoint, mockPreferences);
+                } else {
+                    $('#' + endpoint + '-list').innerHTML = createCardMarkup(mockData, endpoint);
+                }
+            }, 10000); // 10 second timeout
+            
+            // Set the main title and subtitle
+            contentContainer.innerHTML = `
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-1">${title} Management</h2>
+                    <p class="text-gray-500">Here's What's Happening with your tourist app today</p>
+                </div>
+                
+                <div class="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
+                    <h3 class="text-xl font-semibold text-gray-700">${title} (${totalItems})</h3>
+                    ${endpoint === 'users' ? `
+                        <div class="flex space-x-2">
+                             <button class="flex items-center px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-150 text-gray-700 font-semibold text-sm focus-ring-light">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Refresh
+                            </button>
+                            <button class="flex items-center px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-150 text-gray-700 font-semibold text-sm focus-ring-light">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                Export
+                            </button>
+                        </div>
+                    ` : `
+                        <div class="flex space-x-2">
+                             <button class="flex items-center px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-150 text-gray-700 font-semibold text-sm focus-ring-light">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Refresh
+                            </button>
+                            <button id="add-item-btn" class="flex items-center px-3 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-150 font-semibold text-white shadow-md shadow-blue-500/30 focus-ring-light">
+                                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                Add ${title.split(' ')[0]}
+                            </button>
+                        </div>
+                    `}
+                </div>
+                <div id="${endpoint}-list">
+                    <!-- Data will be inserted here -->
+                </div>
+            `;
+
+            if (endpoint !== 'users') {
+                 $('#add-item-btn').addEventListener('click', () => modal.renderForm(endpoint));
+            }
+
+            try {
+                // Try to fetch from Supabase first
+                const { data, error } = await supabase.from(endpoint).select();
+                const { data: preferences } = endpoint === 'users' ? await supabase.from('user_preferences').select() : { data: [], error: null };
+
+                if (error) {
+                    console.warn(`Supabase error for ${endpoint}:`, error.message);
+                    updateConnectionStatus('error');
+                    
+                    // Fallback to mock data if Supabase fails
+                    const mockData = getStore(endpoint);
+                    const mockPreferences = endpoint === 'users' ? userPreferencesData : [];
+                    
+                    // Update in-memory data store
+                    if (endpoint === 'local_delicacies') localDelicaciesData = mockData;
+                    else if (endpoint === 'destinations') destinationsData = mockData;
+                    else if (endpoint === 'local_spots') localSpotsData = mockData;
+                    else if (endpoint === 'hotels') hotelsData = mockData;
+                    else if (endpoint === 'restaurants') restaurantsData = mockData;
+                    else if (endpoint === 'eateries') eateriesData = mockData;
+                    else if (endpoint === 'users') usersData = mockData;
+
+                    // Use the appropriate renderer with mock data
+                    if (endpoint === 'users') {
+                        $('#' + endpoint + '-list').innerHTML = createTableMarkup(mockData, endpoint, mockPreferences);
+                    } else {
+                        $('#' + endpoint + '-list').innerHTML = createCardMarkup(mockData, endpoint);
+                    }
+                    
+                    showToast(`Using sample data for ${endpoint.replace(/_/g, ' ')}. Connect to Supabase for real data.`, true);
+                } else {
+                    // Successfully fetched from Supabase
+                    updateConnectionStatus('connected');
+                    
+                    // Update in-memory data store for the mock service
+                    if (endpoint === 'local_delicacies') localDelicaciesData = data;
+                    else if (endpoint === 'destinations') destinationsData = data;
+                    else if (endpoint === 'local_spots') localSpotsData = data;
+                    else if (endpoint === 'hotels') hotelsData = data;
+                    else if (endpoint === 'restaurants') restaurantsData = data;
+                    else if (endpoint === 'eateries') eateriesData = data;
+                    else if (endpoint === 'users') usersData = data;
+
+                    // Use the appropriate renderer
+                    if (endpoint === 'users') {
+                        $('#' + endpoint + '-list').innerHTML = createTableMarkup(data, endpoint, preferences);
+                    } else {
+                        $('#' + endpoint + '-list').innerHTML = createCardMarkup(data, endpoint);
+                    }
+                }
+            } catch (e) {
+                console.error(`Error fetching ${endpoint}:`, e);
+                updateConnectionStatus('error');
+                
+                // Fallback to mock data on any error
+                const mockData = getStore(endpoint);
+                const mockPreferences = endpoint === 'users' ? userPreferencesData : [];
+                
+                if (endpoint === 'users') {
+                    $('#' + endpoint + '-list').innerHTML = createTableMarkup(mockData, endpoint, mockPreferences);
+                } else {
+                    $('#' + endpoint + '-list').innerHTML = createCardMarkup(mockData, endpoint);
+                }
+                showToast(`Using sample data for ${endpoint.replace(/_/g, ' ')}. Check connection.`, true);
+            } finally {
+                clearTimeout(timeoutId);
+                showLoading(false);
+            }
+        };
+
+        // Global functions for table/card actions
+        window.editItem = (endpoint, id) => {
+            let dataStore = getStore(endpoint);
+            const item = dataStore.find(d => d.id === id);
+            if (item) {
+                modal.renderForm(endpoint, item);
+            }
+        };
+
+        window.deleteItem = (endpoint, id, name) => {
+            const onConfirm = async () => {
+                showLoading(true);
+                try {
+                    const response = await supabase.from(endpoint).delete(id); 
+
+                    if (response.error) {
+                        showToast(`Delete Error: ${response.error.message}`, true);
+                    } else {
+                        showToast(`${name} deleted successfully.`);
+                    }
+                } catch (error) {
+                    showToast(`An unexpected error occurred during deletion: ${error.message}`, true);
+                } finally {
+                    showLoading(false);
+                }
+            };
+            
+            if (endpoint === 'users' && id === 'user1') {
+                showToast(`Cannot delete the primary mock admin user.`, true);
+                return;
+            }
+
+            customConfirm(`You are about to permanently delete "${name}". This cannot be undone.`, onConfirm, endpoint.replace(/_/g, ' ').slice(0, -1));
+        };
+
+
+        // ====================================================================
+        // 6. ROUTING AND INITIALIZATION
+        // ====================================================================
+
+        const routes = {
+            'dashboard': renderDashboard,
+            'users': () => renderManagementView('users', 'User'),
+            'local_delicacies': () => renderManagementView('local_delicacies', 'Delicacy'),
+            'destinations': () => renderManagementView('destinations', 'Destination'),
+            'local_spots': () => renderManagementView('local_spots', 'Local Spot'),
+            'hotels': () => renderManagementView('hotels', 'Hotel'),
+            'restaurants': () => renderManagementView('restaurants', 'Restaurant'),
+            'eateries': () => renderManagementView('eateries', 'Eatery'),
+            'login': renderLoginView 
+        };
+
+        const handleRouting = () => {
+            const currentHash = window.location.hash.substring(1);
+            let route = currentHash || 'dashboard';
+
+            // AUTHENTICATION CHECK
+            if (!isLoggedIn) {
+                if (route !== 'login') {
+                    window.location.hash = '#login';
+                    renderLoginView();
+                    return;
+                }
+                routes[route]();
+                return;
+            } else {
+                // LOGGED IN
+                document.body.classList.remove('bg-gray-100');
+                document.body.classList.add('bg-gray-50');
+                $('#header').classList.remove('hidden');
+                $('#app').classList.remove('logged-out');
+
+                if (route === 'login') {
+                    route = 'dashboard';
+                    window.location.hash = '#dashboard';
+                }
+            }
+
+            // Update active navigation item
+            $$('.nav-link').forEach(el => {
+                el.classList.remove('active-nav');
+            });
+            const activeNav = $(`[data-route="${route}"]`);
+            if (activeNav) {
+                activeNav.classList.add('active-nav');
+            }
+
+            // Render the view
+            if (routes[route]) {
+                routes[route]();
+            } else {
+                window.location.hash = '#dashboard';
+                routes['dashboard']();
+            }
+        };
+        
+        // Initialize App
+        window.addEventListener('hashchange', handleRouting);
+        window.addEventListener('load', handleRouting);
+
+    </script>
+</body>
+</html>

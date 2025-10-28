@@ -251,7 +251,7 @@ const MyReviewsScreen = ({ navigation }) => {
             accessibilityRole="text"
             accessibilityLabel={`You have written ${reviews.length} reviews`}
           >
-            {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+            {`${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'}`}
           </Text>
         </View>
 

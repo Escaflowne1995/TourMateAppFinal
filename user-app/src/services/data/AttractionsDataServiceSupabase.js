@@ -1,5 +1,5 @@
 // AttractionsDataServiceSupabase.js - Attractions data with Supabase
-import destinationsServiceSimple from '../supabase/destinationsServiceSimple';
+import DestinationsDataServiceSupabase from './DestinationsDataServiceSupabase';
 
 /**
  * Modern AttractionsDataService that uses Supabase for data
@@ -14,8 +14,8 @@ class AttractionsDataServiceSupabase {
    */
   static async getFeaturedAttractions(limit = 10) {
     try {
-      const result = await destinationsServiceSimple.getFeaturedDestinations(limit);
-      return result.data || [];
+      const result = await DestinationsDataServiceSupabase.getFeaturedDestinations(limit);
+      return result || [];
     } catch (error) {
       console.error('Error fetching featured attractions:', error);
       return [];
@@ -29,8 +29,8 @@ class AttractionsDataServiceSupabase {
    */
   static async getPopularDestinations(limit = 20) {
     try {
-      const result = await destinationsServiceSimple.getPopularDestinations(limit);
-      return result.data || [];
+      const result = await DestinationsDataServiceSupabase.getPopularDestinations(limit);
+      return result || [];
     } catch (error) {
       console.error('Error fetching popular destinations:', error);
       return [];
@@ -43,7 +43,7 @@ class AttractionsDataServiceSupabase {
    */
   static async getAllAttractions() {
     try {
-      const result = await destinationsServiceSimple.getDestinations();
+      const result = await DestinationsDataServiceSupabase.getDestinations();
       return result.data || [];
     } catch (error) {
       console.error('Error fetching all attractions:', error);
@@ -51,19 +51,34 @@ class AttractionsDataServiceSupabase {
     }
   }
 
-
   /**
    * Force refresh of attractions data
    * @returns {Promise<Array>} Fresh attractions data
    */
   static async refreshAttractions() {
     try {
-      const result = await destinationsServiceSimple.getDestinations();
+      const result = await DestinationsDataServiceSupabase.getDestinations(false); // Force refresh
       return result.data || [];
     } catch (error) {
       console.error('Error refreshing attractions:', error);
       return [];
     }
+  }
+
+  /**
+   * Subscribe to real-time updates for attractions/destinations
+   * @param {Function} callback - Function to call when data changes
+   * @returns {Function} Unsubscribe function
+   */
+  static subscribeToUpdates(callback) {
+    return DestinationsDataServiceSupabase.subscribeToUpdates(callback);
+  }
+
+  /**
+   * Clear cache to force refresh
+   */
+  static clearCache() {
+    DestinationsDataServiceSupabase.clearCache();
   }
 }
 

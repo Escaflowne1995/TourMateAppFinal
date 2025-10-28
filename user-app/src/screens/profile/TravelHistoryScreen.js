@@ -204,7 +204,7 @@ const TravelHistoryScreen = ({ navigation }) => {
             accessibilityRole="text"
             accessibilityLabel={`You have ${travelHistory.length} trips in your history`}
           >
-            {travelHistory.length} {travelHistory.length === 1 ? 'trip' : 'trips'}
+            {`${travelHistory.length} ${travelHistory.length === 1 ? 'trip' : 'trips'}`}
           </Text>
         </View>
 

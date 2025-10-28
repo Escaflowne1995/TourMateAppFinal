@@ -4,11 +4,13 @@ import { ThemeProvider } from './src/contexts/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import LocalAuthService from './src/services/auth/LocalAuthService';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { setupTextErrorDetection } from './src/utils/TextErrorDetector';
 
 // Ignore specific warnings
 LogBox.ignoreLogs([
   'Sending `onAnimatedValueUpdate` with no listeners registered.',
   'Non-serializable values were found in the navigation state',
+  'Text strings must be rendered within a <Text> component',
 ]);
 
 export default function App() {
@@ -20,6 +22,9 @@ export default function App() {
 
   const initializeApp = async () => {
     try {
+      // Setup text error detection
+      setupTextErrorDetection();
+      
       // Initialize authentication service
       await LocalAuthService.initialize();
       

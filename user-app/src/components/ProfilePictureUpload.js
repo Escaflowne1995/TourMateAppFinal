@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SimpleImageService from '../services/image/SimpleImageService';
-import UserService from '../services/user/UserService';
+import LocalAuthService from '../services/auth/LocalAuthService';
 
 const ProfilePictureUpload = ({ userId, currentAvatar, onAvatarUpdate }) => {
   const [uploading, setUploading] = useState(false);
@@ -53,27 +53,67 @@ const ProfilePictureUpload = ({ userId, currentAvatar, onAvatarUpdate }) => {
       // Convert to base64 for local storage
       const uploadResult = await SimpleImageService.convertToBase64(imageUri);
       
-              if (uploadResult.success) {
-          setAvatar(uploadResult.base64);
+      if (uploadResult.success) {
+        setAvatar(uploadResult.base64);
+        
+        // Save directly to storage (works even when logged out)
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        
+        // Get current user data
+        const currentUserString = await AsyncStorage.getItem('@tourist_app_current_user');
+        if (currentUserString) {
+          const currentUser = JSON.parse(currentUserString);
+          const updatedUser = {
+            ...currentUser,
+            avatar: uploadResult.base64,
+            avatar_url: uploadResult.base64,
+            updatedAt: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
           
-          // Update user profile in local storage
-          const updateResult = await UserService.saveUserData(userId, {
-            avatar: uploadResult.base64
-          });
+          // Save updated user
+          await AsyncStorage.setItem('@tourist_app_current_user', JSON.stringify(updatedUser));
           
-          if (updateResult.success) {
-            if (onAvatarUpdate) {
-              onAvatarUpdate(uploadResult.base64);
+          // Also update in users array
+          const usersString = await AsyncStorage.getItem('@tourist_app_users');
+          if (usersString) {
+            const users = JSON.parse(usersString);
+            const userIndex = users.findIndex(user => user.email === currentUser.email);
+            if (userIndex !== -1) {
+              users[userIndex] = { ...users[userIndex], ...updatedUser };
+              await AsyncStorage.setItem('@tourist_app_users', JSON.stringify(users));
             }
-            Alert.alert('Success!', 'Profile picture updated');
-          } else {
-            throw new Error(updateResult.error);
           }
+          
+          if (onAvatarUpdate) {
+            onAvatarUpdate(uploadResult.base64);
+          }
+          Alert.alert('Success!', 'Profile picture updated');
         } else {
-          throw new Error(uploadResult.error);
+          // No current user, create a temporary one
+          const tempUser = {
+            uid: Date.now().toString(),
+            email: 'guest@example.com',
+            name: 'Guest User',
+            avatar: uploadResult.base64,
+            avatar_url: uploadResult.base64,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          
+          await AsyncStorage.setItem('@tourist_app_current_user', JSON.stringify(tempUser));
+          
+          if (onAvatarUpdate) {
+            onAvatarUpdate(uploadResult.base64);
+          }
+          Alert.alert('Success!', 'Profile picture updated');
         }
+      } else {
+        throw new Error(uploadResult.error);
+      }
       
     } catch (error) {
+      console.error('Avatar upload error:', error);
       Alert.alert('Upload Failed', error.message || 'Please try again');
     } finally {
       setUploading(false);

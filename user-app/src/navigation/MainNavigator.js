@@ -95,9 +95,10 @@ export default function MainNavigator({ route }) {
       <Tab.Screen 
         name="Home" 
         options={{
-          title: (userData.fullName || userData.displayName || userData.name) ? 
-            `Welcome, ${(userData.fullName || userData.displayName || userData.name).split(' ')[0]}!` : 
-            'Discover Cebu',
+          title: (() => {
+            const name = userData.fullName || userData.displayName || userData.name;
+            return name ? `Welcome, ${name.split(' ')[0]}!` : 'Discover Cebu';
+          })(),
           tabBarLabel: 'Home',
         }}
       >

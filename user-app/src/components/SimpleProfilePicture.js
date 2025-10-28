@@ -9,7 +9,7 @@ import {
   StyleSheet 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import UserService from '../services/user/UserService';
+import LocalAuthService from '../services/auth/LocalAuthService';
 import SimpleImageService from '../services/image/SimpleImageService';
 
 const SimpleProfilePicture = ({ userId, currentAvatar, onAvatarUpdate }) => {
@@ -58,13 +58,47 @@ const SimpleProfilePicture = ({ userId, currentAvatar, onAvatarUpdate }) => {
       if (base64Result.success) {
         console.log('Base64 conversion successful');
         
-        // Update user profile in local storage
-        const updateResult = await UserService.saveUserData(userId, {
-          avatar: base64Result.base64
-        });
+        // Save directly to storage (works even when logged out)
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
         
-        if (!updateResult.success) {
-          throw new Error(updateResult.error);
+        // Get current user data
+        const currentUserString = await AsyncStorage.getItem('@tourist_app_current_user');
+        if (currentUserString) {
+          const currentUser = JSON.parse(currentUserString);
+          const updatedUser = {
+            ...currentUser,
+            avatar: base64Result.base64,
+            avatar_url: base64Result.base64,
+            updatedAt: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          
+          // Save updated user
+          await AsyncStorage.setItem('@tourist_app_current_user', JSON.stringify(updatedUser));
+          
+          // Also update in users array
+          const usersString = await AsyncStorage.getItem('@tourist_app_users');
+          if (usersString) {
+            const users = JSON.parse(usersString);
+            const userIndex = users.findIndex(user => user.email === currentUser.email);
+            if (userIndex !== -1) {
+              users[userIndex] = { ...users[userIndex], ...updatedUser };
+              await AsyncStorage.setItem('@tourist_app_users', JSON.stringify(users));
+            }
+          }
+        } else {
+          // No current user, create a temporary one
+          const tempUser = {
+            uid: Date.now().toString(),
+            email: 'guest@example.com',
+            name: 'Guest User',
+            avatar: base64Result.base64,
+            avatar_url: base64Result.base64,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          
+          await AsyncStorage.setItem('@tourist_app_current_user', JSON.stringify(tempUser));
         }
         
         // Update local state

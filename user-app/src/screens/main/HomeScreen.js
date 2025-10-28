@@ -6,6 +6,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { getThemeColors } from '../../utils/theme';
 import HorizontalCarousel from '../../components/home/HorizontalCarousel';
 import useHomeData from '../../hooks/useHomeData';
+import { SafeTextRenderer } from '../../components/common/SafeTextRenderer';
 
 const HomeScreen = ({ navigation, route, userData: userDataProp }) => {
   const { isDarkMode } = useTheme();
@@ -18,6 +19,8 @@ const HomeScreen = ({ navigation, route, userData: userDataProp }) => {
     popularDestinations,
     localDelicacies,
     isLoading,
+    lastUpdated,
+    realtimeUpdateCount,
     navigateToAttraction,
     navigateToDelicacy
   } = useHomeData();
@@ -67,6 +70,15 @@ const HomeScreen = ({ navigation, route, userData: userDataProp }) => {
             </LinearGradient>
           </ImageBackground>
         </View>
+
+        {/* Real-time Update Indicator */}
+        {realtimeUpdateCount > 0 && (
+          <View style={styles.realtimeIndicator}>
+            <Text style={styles.realtimeText}>
+              {`🔄 Live updates enabled • ${realtimeUpdateCount} update${realtimeUpdateCount !== 1 ? 's' : ''} received`}
+            </Text>
+          </View>
+        )}
 
         {/* Content Sections with Enhanced Spacing */}
         <View style={styles.contentContainer}>
@@ -191,6 +203,22 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
   },
   fullScreenWelcomeWrapper: {
     flex: 1,
+  },
+  realtimeIndicator: {
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginHorizontal: 20,
+    marginBottom: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.primary + '40',
+  },
+  realtimeText: {
+    fontSize: 12,
+    color: colors.primary,
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });
 

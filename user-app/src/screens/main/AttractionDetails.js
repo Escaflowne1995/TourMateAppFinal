@@ -443,7 +443,7 @@ const AttractionDetails = ({ route, navigation }) => {
                     )}
                   </View>
                   <Text style={styles.visitedDate}>
-                    Visited on {visitData?.visit_date ? new Date(visitData.visit_date).toLocaleDateString() : 'Unknown date'}
+                    {`Visited on ${visitData?.visit_date ? new Date(visitData.visit_date).toLocaleDateString() : 'Unknown date'}`}
                   </Text>
                   {visitData?.visit_notes && (
                     <Text style={styles.visitNotes}>{visitData.visit_notes}</Text>

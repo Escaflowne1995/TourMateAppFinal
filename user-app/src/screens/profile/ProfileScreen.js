@@ -13,7 +13,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import LocalAuthService from '../../services/auth/LocalAuthService';
-import UserService from '../../services/user/UserService';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getThemeColors } from '../../utils/theme';
 import favoritesService from '../../services/api/favoritesService';
@@ -22,6 +21,23 @@ import reviewsService from '../../services/api/reviewsService';
 const ProfileScreen = ({ navigation, route, userData: userDataProp }) => {
   const { isDarkMode } = useTheme();
   const colors = getThemeColors(isDarkMode);
+
+  // Add error boundary for text rendering errors
+  React.useEffect(() => {
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      if (args[0] && args[0].includes && args[0].includes('Text strings must be rendered within a <Text> component')) {
+        console.log('🚨 TEXT ERROR DETECTED:', args);
+        console.log('🚨 Current component: ProfileScreen');
+        console.log('🚨 Stack trace:', new Error().stack);
+      }
+      originalConsoleError.apply(console, args);
+    };
+
+    return () => {
+      console.error = originalConsoleError;
+    };
+  }, []);
   const styles = getStyles(colors, isDarkMode);
   
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +45,7 @@ const ProfileScreen = ({ navigation, route, userData: userDataProp }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [reviewsCount, setReviewsCount] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Load favorites and reviews counts
   const loadCounts = async () => {
@@ -57,16 +74,54 @@ const ProfileScreen = ({ navigation, route, userData: userDataProp }) => {
   };
 
 
+
   // Refresh user data when screen focuses or user changes
   useEffect(() => {
     const refreshUserData = async () => {
-      // Using local storage instead of Firebase auth
       try {
         setIsRefreshing(true);
-        const result = await UserService.getCurrentUserData();
-        if (result.success) {
-          setCurrentUserData(result.userData);
-          console.log('ProfileScreen: User data refreshed for:', result.userData.email);
+        // Try multiple methods to get user data
+        let currentUser = null;
+        
+        // Method 1: Try LocalAuthService
+        try {
+          await LocalAuthService.initialize();
+          currentUser = await LocalAuthService.getCurrentUser();
+          if (currentUser) {
+            console.log('ProfileScreen: Data loaded via LocalAuthService');
+          }
+        } catch (error) {
+          console.log('ProfileScreen: LocalAuthService failed, trying direct storage...');
+        }
+        
+        // Method 2: Direct storage access (fallback)
+        if (!currentUser) {
+          try {
+            const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+            const currentUserString = await AsyncStorage.getItem('@tourist_app_current_user');
+            if (currentUserString) {
+              currentUser = JSON.parse(currentUserString);
+              console.log('ProfileScreen: Data loaded via direct storage');
+            }
+          } catch (error) {
+            console.log('ProfileScreen: Direct storage also failed');
+          }
+        }
+        
+        if (currentUser) {
+          setCurrentUserData(currentUser);
+          setRefreshKey(prev => prev + 1); // Force re-render
+          console.log('ProfileScreen: User data refreshed for:', currentUser.email);
+          console.log('ProfileScreen: Refreshed user data:', {
+            name: currentUser.name,
+            fullName: currentUser.fullName,
+            email: currentUser.email,
+            avatar: currentUser.avatar ? 'Present' : 'Missing',
+            phone: currentUser.phone,
+            location: currentUser.location
+          });
+        } else {
+          console.log('ProfileScreen: No user data found');
         }
       } catch (error) {
         console.error('ProfileScreen: Failed to refresh user data:', error);
@@ -87,25 +142,123 @@ const ProfileScreen = ({ navigation, route, userData: userDataProp }) => {
       refreshUserData();
     });
     
+    // Listen for route params changes (e.g., when returning from EditProfile)
+    if (route.params?.refresh || route.params?.refreshProfile) {
+      console.log('ProfileScreen: Refresh triggered from route params');
+      refreshUserData();
+    }
+    
     return unsubscribe;
   }, [navigation]);
 
+  // Listen for route params changes (e.g., when returning from EditProfile)
+  useEffect(() => {
+    if (route.params?.refresh || route.params?.refreshProfile) {
+      console.log('ProfileScreen: Refresh triggered from route params');
+      const refreshUserData = async () => {
+        try {
+          setIsRefreshing(true);
+          
+          // Try multiple methods to get user data
+          let currentUser = null;
+          
+          // Method 1: Try LocalAuthService
+          try {
+            await LocalAuthService.initialize();
+            currentUser = await LocalAuthService.getCurrentUser();
+            if (currentUser) {
+              console.log('ProfileScreen: Route params - Data loaded via LocalAuthService');
+            }
+          } catch (error) {
+            console.log('ProfileScreen: Route params - LocalAuthService failed, trying direct storage...');
+          }
+          
+          // Method 2: Direct storage access (fallback)
+          if (!currentUser) {
+            try {
+              const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+              const currentUserString = await AsyncStorage.getItem('@tourist_app_current_user');
+              if (currentUserString) {
+                currentUser = JSON.parse(currentUserString);
+                console.log('ProfileScreen: Route params - Data loaded via direct storage');
+              }
+            } catch (error) {
+              console.log('ProfileScreen: Route params - Direct storage also failed');
+            }
+          }
+          
+          if (currentUser) {
+            setCurrentUserData(currentUser);
+            setRefreshKey(prev => prev + 1); // Force re-render
+            console.log('ProfileScreen: Route params refresh - User data refreshed for:', currentUser.email);
+            console.log('ProfileScreen: Route params refresh - User data:', {
+              name: currentUser.name,
+              fullName: currentUser.fullName,
+              email: currentUser.email,
+              avatar: currentUser.avatar ? 'Present' : 'Missing',
+              phone: currentUser.phone,
+              location: currentUser.location
+            });
+          } else {
+            console.log('ProfileScreen: Route params - No user data found');
+          }
+        } catch (error) {
+          console.error('ProfileScreen: Failed to refresh user data:', error);
+        } finally {
+          setIsRefreshing(false);
+        }
+      };
+      refreshUserData();
+    }
+  }, [route.params?.refresh, route.params?.refreshProfile]);
+
   const userProfile = {
-    name: currentUserData.fullName || currentUserData.displayName || currentUserData.name || 'Guest User',
-    email: currentUserData.email || 'guest@example.com',
-    avatar: currentUserData.avatar || '', // Empty for new users
-    favoriteSpots: favoritesCount,
-    reviews: reviewsCount,
+    name: (currentUserData?.fullName || 
+          currentUserData?.displayName || 
+          currentUserData?.name || 
+          currentUserData?.user_metadata?.name ||
+          currentUserData?.email?.split('@')[0] || // Use email prefix as fallback
+          'Guest User'),
+    email: currentUserData?.email || 'guest@example.com',
+    avatar: currentUserData?.avatar || currentUserData?.avatar_url || currentUserData?.picture || '', // Check multiple avatar fields
+    favoriteSpots: favoritesCount || 0,
+    reviews: reviewsCount || 0,
     language: 'English',
     currency: 'PHP',
+    refreshKey: refreshKey, // Include refresh key to force re-render
   };
+
+  // Debug: Log avatar status for troubleshooting
+  console.log('ProfileScreen: Avatar status:', userProfile?.avatar ? 'Present' : 'Missing');
+  console.log('ProfileScreen: User profile data:', {
+    name: userProfile?.name,
+    email: userProfile?.email,
+    avatar: userProfile?.avatar ? 'Present' : 'Missing',
+    favoriteSpots: userProfile?.favoriteSpots,
+    reviews: userProfile?.reviews
+  });
+  console.log('ProfileScreen: Current user data keys:', Object.keys(currentUserData || {}));
+
+  // Safety check - if currentUserData is undefined, show loading or default state
+  if (!currentUserData) {
+    return (
+      <BaseScreen>
+        <View style={styles.container}>
+          <Text>Loading profile...</Text>
+        </View>
+      </BaseScreen>
+    );
+  }
 
   const menuItems = [
     {
       id: '1',
       title: 'Edit Profile',
       icon: 'person-outline',
-      action: () => navigation.navigate('EditProfile', { userData: currentUserData }),
+      action: () => navigation.navigate('EditProfile', { 
+        userData: currentUserData,
+        refreshProfile: true 
+      }),
       accessibilityLabel: 'Edit Profile',
       accessibilityHint: 'Opens profile editing screen',
     },
@@ -164,22 +317,36 @@ const ProfileScreen = ({ navigation, route, userData: userDataProp }) => {
         {
           text: 'Logout',
           onPress: async () => {
+            console.log('🔄 Starting logout process...');
             setIsLoading(true);
             try {
               // Local auth logout
+              console.log('🔄 Calling LocalAuthService.signOut()...');
               await LocalAuthService.signOut();
-              navigation.reset({
-                index: 0,
-                routes: [{ 
-                  name: 'Auth',
-                  params: {
-                    screen: 'Landing'
-                  }
-                }],
-              });
+              console.log('✅ LocalAuthService.signOut() completed');
+              
+              // Clear loading state first
+              console.log('🔄 Setting isLoading to false...');
               setIsLoading(false);
+              console.log('✅ isLoading set to false');
+              
+              // Small delay to ensure state updates complete before navigation
+              console.log('🔄 Starting navigation reset in 100ms...');
+              setTimeout(() => {
+                console.log('🔄 Executing navigation.reset()...');
+                navigation.reset({
+                  index: 0,
+                  routes: [{ 
+                    name: 'Auth',
+                    params: {
+                      screen: 'Landing'
+                    }
+                  }],
+                });
+                console.log('✅ navigation.reset() completed');
+              }, 100);
             } catch (error) {
-              console.error('Logout error:', error);
+              console.error('❌ Logout error:', error);
               Alert.alert('Error', 'Failed to logout. Please try again.');
               setIsLoading(false);
             }
@@ -208,28 +375,37 @@ const ProfileScreen = ({ navigation, route, userData: userDataProp }) => {
             imageStyle={styles.headerBgImage}
           >
             <View style={styles.profileInfo}>
-              {userProfile.avatar ? (
+              {userProfile?.avatar && userProfile.avatar.trim() !== '' ? (
                 <Image
                   source={{ 
-                    uri: currentUserData.avatar && currentUserData.avatar.startsWith('data:image') 
-                      ? currentUserData.avatar 
-                      : userProfile.avatar 
+                    uri: userProfile.avatar.startsWith('data:image') 
+                      ? userProfile.avatar 
+                      : `data:image/jpeg;base64,${userProfile.avatar}`
                   }}
                   style={styles.profilePic}
+                  onError={(error) => {
+                    console.error('ProfileScreen: Image load error:', error);
+                    console.log('ProfileScreen: Failed to load avatar:', userProfile.avatar?.substring(0, 100));
+                  }}
+                  onLoad={() => {
+                    console.log('ProfileScreen: Avatar loaded successfully');
+                  }}
                 />
               ) : (
                 <View style={[styles.profilePic, styles.profilePicPlaceholder]}>
                   <Ionicons name="person" size={60} color="#ffffff" />
                 </View>
               )}
-              <Text style={styles.profileName}>{userProfile.name}</Text>
+              <Text style={styles.profileName}>{userProfile?.name || 'Guest User'}</Text>
+              
+              
               <View style={styles.statsContainer}>
                 <View style={[styles.statCard, isDarkMode && styles.statCardDark]}>
-                  <Text style={[styles.statNumber, isDarkMode && styles.statNumberDark]}>{userProfile.favoriteSpots}</Text>
+                  <Text style={[styles.statNumber, isDarkMode && styles.statNumberDark]}>{userProfile?.favoriteSpots || 0}</Text>
                   <Text style={[styles.statLabel, isDarkMode && styles.statLabelDark]}>Favorite Spots</Text>
                 </View>
                 <View style={[styles.statCard, isDarkMode && styles.statCardDark]}>
-                  <Text style={[styles.statNumber, isDarkMode && styles.statNumberDark]}>{userProfile.reviews}</Text>
+                  <Text style={[styles.statNumber, isDarkMode && styles.statNumberDark]}>{userProfile?.reviews || 0}</Text>
                   <Text style={[styles.statLabel, isDarkMode && styles.statLabelDark]}>Reviews</Text>
                 </View>
               </View>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Connection Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>TourMate Admin Panel - Supabase Connection Test</h1>
+    
+    <div id="results"></div>
+    
+    <button onclick="testConnection()">Test Supabase Connection</button>
+    <button onclick="testTables()">Test Database Tables</button>
+    <button onclick="testAuth()">Test Authentication</button>
+    
+    <script>
+        const SUPABASE_URL = 'https://huzmuglxzkaztzxjerym.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1em11Z2x4emthenR6eGplcnltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTAwOTUsImV4cCI6MjA3MjYyNjA5NX0.Z4kYsI4OIOvMo1o8uKg6ckBpu2LDAA7q6iKReJUftHw';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.textContent = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+        
+        async function testConnection() {
+            addResult('Testing Supabase connection...', 'info');
+            
+            try {
+                // Test basic connection by trying to access a system table
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    if (error.message.includes('relation "users" does not exist')) {
+                        addResult('✅ Supabase connection successful! Database schema needs to be created.', 'success');
+                        addResult('Please run the admin-supabase-schema.sql file in your Supabase Dashboard.', 'info');
+                    } else {
+                        addResult(`❌ Database error: ${error.message}`, 'error');
+                    }
+                } else {
+                    addResult('✅ Supabase connection and database tables are working!', 'success');
+                }
+            } catch (error) {
+                addResult(`❌ Connection failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testTables() {
+            addResult('Testing database tables...', 'info');
+            
+            const tables = ['users', 'destinations', 'local_delicacies', 'hotels', 'restaurants', 'eateries', 'local_spots', 'user_preferences'];
+            
+            for (const table of tables) {
+                try {
+                    const { data, error } = await supabase
+                        .from(table)
+                        .select('count')
+                        .limit(1);
+                    
+                    if (error) {
+                        addResult(`❌ Table '${table}' error: ${error.message}`, 'error');
+                    } else {
+                        addResult(`✅ Table '${table}' is accessible`, 'success');
+                    }
+                } catch (error) {
+                    addResult(`❌ Table '${table}' failed: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        async function testAuth() {
+            addResult('Testing authentication...', 'info');
+            
+            try {
+                // Test auth with invalid credentials first
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: 'test@test.com',
+                    password: 'wrongpassword'
+                });
+                
+                if (error) {
+                    addResult('✅ Authentication system is working (correctly rejected invalid credentials)', 'success');
+                } else {
+                    addResult('⚠️ Authentication may not be properly configured', 'error');
+                }
+                
+                // Test with admin credentials (if they exist)
+                const { data: adminData, error: adminError } = await supabase.auth.signInWithPassword({
+                    email: 'admin@admin.com',
+                    password: 'password123'
+                });
+                
+                if (adminError) {
+                    addResult(`ℹ️ Admin user not found or wrong password: ${adminError.message}`, 'info');
+                    addResult('Please create admin user in Supabase Auth with email: admin@admin.com', 'info');
+                } else {
+                    addResult('✅ Admin authentication successful!', 'success');
+                    // Sign out after test
+                    await supabase.auth.signOut();
+                }
+                
+            } catch (error) {
+                addResult(`❌ Authentication test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-run connection test on page load
+        window.addEventListener('load', () => {
+            addResult('TourMate Admin Panel - Supabase Connection Test', 'info');
+            addResult('Click the buttons above to test different aspects of the connection.', 'info');
+        });
+    </script>
+</body>
+</html>

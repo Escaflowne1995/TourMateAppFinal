@@ -196,7 +196,7 @@ const FavoriteSpotsScreen = ({ navigation }) => {
           accessibilityRole="text"
           accessibilityLabel={`You have ${favorites.length} favorite spots`}
         >
-          {favorites.length} {favorites.length === 1 ? 'spot' : 'spots'}
+          {`${favorites.length} ${favorites.length === 1 ? 'spot' : 'spots'}`}
         </Text>
       </View>
 

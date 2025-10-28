@@ -34,7 +34,7 @@ export const registerUser = async (name, email, password, profileData = {}) => {
       
       // Create profile record with registration data
       const profileRecord = {
-        id: authData.user.id,
+        auth_user_id: authData.user.id, // Use auth_user_id for RLS compatibility
         name: name,
         full_name: name,
         email: email,
@@ -116,7 +116,7 @@ export const loginUser = async (email, password) => {
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('*')
-      .eq('id', data.user.id)
+      .eq('auth_user_id', data.user.id)
       .single();
 
     if (profileError) {
