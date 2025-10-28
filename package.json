@@ -1,7 +1,7 @@
 {
   "name": "tourist-app",
   "version": "1.0.0",
-  "description": "Tourist App - Multi-platform tourism application with admin panel and user mobile app",
+  "description": "Tourist App - Multi-platform tourism application with user mobile app",
   "private": true,
   "scripts": {
     "start": "cd user-app && npm start",
