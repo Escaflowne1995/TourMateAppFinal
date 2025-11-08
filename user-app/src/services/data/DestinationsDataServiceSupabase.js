@@ -36,7 +36,7 @@ class DestinationsDataServiceSupabase {
         .from('destinations')
         .select('*')
         .eq('is_active', true)
-        .order('featured', { ascending: false })
+        .eq('featured', true)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -118,31 +118,33 @@ class DestinationsDataServiceSupabase {
   }
 
   /**
-   * Get popular destinations (sorted by rating and reviews)
+   * Get popular destinations (non-featured destinations sorted by rating and reviews)
    * @param {number} limit - Maximum number of destinations to return
    * @returns {Promise<Array>} Array of popular destinations
    */
   async getPopularDestinations(limit = 20) {
     try {
-      const result = await this.getDestinations();
-      const destinations = result.data || [];
+      console.log('🔄 Fetching popular destinations from Supabase...');
       
-      // Return destinations sorted by rating and review count
-      const popular = destinations
-        .sort((a, b) => {
-          // Sort by featured first, then by rating and review count
-          if (a.featured && !b.featured) return -1;
-          if (!a.featured && b.featured) return 1;
-          
-          const aScore = (a.rating * 0.7) + (Math.min(a.review_count || 0, 100) * 0.3);
-          const bScore = (b.rating * 0.7) + (Math.min(b.review_count || 0, 100) * 0.3);
-          
-          return bScore - aScore;
-        })
-        .slice(0, limit);
-        
-      console.log(`✅ Loaded ${popular.length} popular destinations from Supabase`);
-      return popular;
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('*')
+        .eq('is_active', true)
+        .eq('featured', false)
+        .order('rating', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('❌ Error fetching popular destinations:', error);
+        throw new Error(error.message);
+      }
+
+      // Format destinations for mobile app compatibility
+      const formattedDestinations = data.map(destination => this.formatDestinationForMobile(destination));
+      
+      console.log(`✅ Loaded ${formattedDestinations.length} popular destinations from Supabase`);
+      return formattedDestinations;
     } catch (error) {
       console.error('❌ Failed to fetch popular destinations:', error);
       return [];
@@ -161,6 +163,7 @@ class DestinationsDataServiceSupabase {
         .select('*')
         .eq('id', id)
         .eq('is_active', true)
+        .eq('featured', true)
         .single();
 
       if (error) {

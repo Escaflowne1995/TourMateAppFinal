@@ -110,7 +110,7 @@ export const getDestinations = async () => {
       .from('destinations')
       .select('*')
       .eq('is_active', true)
-      .order('featured', { ascending: false })
+      .eq('featured', true)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -164,30 +164,31 @@ export const getFeaturedDestinations = async (limit = 10) => {
 };
 
 /**
- * Get popular destinations (sorted by rating and reviews)
+ * Get popular destinations (non-featured destinations)
  */
 export const getPopularDestinations = async (limit = 20) => {
   try {
-    const result = await getDestinations();
-    const destinations = result.data || [];
+    console.log('🔄 Fetching popular destinations...');
     
-    // Return destinations sorted by rating and review count
-    const popular = destinations
-      .sort((a, b) => {
-        // Sort by featured first, then by rating and review count
-        if (a.featured && !b.featured) return -1;
-        if (!a.featured && b.featured) return 1;
-        
-        const aScore = (a.rating * 0.7) + (Math.min(a.review_count, 100) * 0.3);
-        const bScore = (b.rating * 0.7) + (Math.min(b.review_count, 100) * 0.3);
-        
-        return bScore - aScore;
-      })
-      .slice(0, limit);
-      
-    return { success: true, data: popular };
+    const { data, error } = await supabase
+      .from('destinations')
+      .select('*')
+      .eq('is_active', true)
+      .eq('featured', false)
+      .order('rating', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const formatted = data.map(formatDestinationForMobile);
+    console.log(`✅ Loaded ${formatted.length} popular destinations`);
+    return { success: true, data: formatted };
+
   } catch (error) {
-    console.error('Error fetching popular destinations:', error);
+    console.error('❌ Failed to fetch popular destinations:', error);
     return { success: false, error: error.message, data: [] };
   }
 };

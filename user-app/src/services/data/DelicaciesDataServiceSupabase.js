@@ -76,6 +76,7 @@ class DelicaciesDataServiceSupabase {
         .from('local_delicacies')
         .select('*')
         .eq('is_active', true)
+        .eq('featured', true)
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -91,6 +92,40 @@ class DelicaciesDataServiceSupabase {
     } catch (error) {
       console.error('❌ Failed to fetch featured delicacies:', error);
       // Return empty array on error
+      return [];
+    }
+  }
+
+  /**
+   * Get popular delicacies (non-featured delicacies)
+   * @param {number} limit - Maximum number of delicacies to return
+   * @returns {Promise<Array>} Array of popular delicacies
+   */
+  async getPopularDelicacies(limit = 10) {
+    try {
+      console.log('🔄 Fetching popular delicacies from Supabase...');
+      
+      const { data, error } = await supabase
+        .from('local_delicacies')
+        .select('*')
+        .eq('is_active', true)
+        .eq('featured', false)
+        .order('rating', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('❌ Error fetching popular delicacies:', error);
+        throw new Error(error.message);
+      }
+
+      // Format delicacies for mobile app compatibility
+      const formattedDelicacies = data.map(delicacy => this.formatDelicacyForMobile(delicacy));
+      
+      console.log(`✅ Loaded ${formattedDelicacies.length} popular delicacies from Supabase`);
+      return formattedDelicacies;
+    } catch (error) {
+      console.error('❌ Failed to fetch popular delicacies:', error);
       return [];
     }
   }

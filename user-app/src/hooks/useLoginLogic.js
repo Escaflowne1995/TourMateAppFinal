@@ -6,7 +6,7 @@ import EmailHistoryService from '../services/storage/EmailHistoryService';
 import LoginController from '../controllers/LoginController';
 import SecurityService from '../services/security/SecurityService';
 
-const useLoginLogic = (navigation) => {
+const useLoginLogic = (navigation, onLogin) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -29,7 +29,12 @@ const useLoginLogic = (navigation) => {
     setIsLoading(true);
 
     try {
-      await loginController.handleLogin(email.trim(), password, navigation);
+      const result = await loginController.handleLogin(email.trim(), password, navigation);
+
+      if (result.success && onLogin) {
+        // Call the onLogin callback with user data
+        onLogin(result.userData);
+      }
 
       try {
         await EmailHistoryService.saveEmail(email);

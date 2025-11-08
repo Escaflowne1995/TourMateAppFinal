@@ -46,7 +46,6 @@ export const registerUser = async (name, email, password, profileData = {}) => {
         gender: profileData.gender || '',
         avatar_url: profileData.avatar || '',
         is_active: true,
-        favorite_spots: [],
         total_reviews: 0,
         registration_date: new Date().toISOString(),
         created_at: new Date().toISOString(),

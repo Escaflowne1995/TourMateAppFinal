@@ -18,6 +18,11 @@ const AttractionCard = ({
     return null;
   }
 
+  // Additional safety checks for required fields
+  const safeName = attraction.name || 'Unknown';
+  const safeLocation = attraction.location || 'Unknown';
+  const safeRating = attraction.rating || 0;
+
   return (
     <TouchableOpacity 
       style={styles.card} 
@@ -34,11 +39,11 @@ const AttractionCard = ({
         />
         
         {/* Floating rating badge */}
-        {showRating && attraction.rating && (
+        {showRating && safeRating > 0 && (
           <View style={styles.ratingBadge}>
             <Ionicons name="star" size={14} color="#FFD700" />
             <Text style={styles.ratingText}>
-              {attraction.rating}
+              {safeRating}
             </Text>
           </View>
         )}
@@ -46,13 +51,13 @@ const AttractionCard = ({
       
       <View style={styles.content}>
         <Text style={styles.name} numberOfLines={2}>
-          {attraction.name || 'Unknown'}
+          {safeName}
         </Text>
         
         <View style={styles.locationContainer}>
           <Ionicons name="location" size={16} color={colors.primary} />
           <Text style={styles.location} numberOfLines={1}>
-            {attraction.location || 'Unknown'}
+            {safeLocation}
           </Text>
         </View>
       </View>

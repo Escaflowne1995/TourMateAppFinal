@@ -20,6 +20,19 @@ ADD COLUMN IF NOT EXISTS coordinates JSONB;
 ALTER TABLE destinations 
 ADD COLUMN IF NOT EXISTS address TEXT;
 
+-- 1.1. Fix local_delicacies table - add missing featured column
+ALTER TABLE local_delicacies 
+ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT false;
+
+ALTER TABLE local_delicacies 
+ADD COLUMN IF NOT EXISTS rating DECIMAL(3,2) DEFAULT 0.0;
+
+ALTER TABLE local_delicacies 
+ADD COLUMN IF NOT EXISTS review_count INTEGER DEFAULT 0;
+
+ALTER TABLE local_delicacies 
+ADD COLUMN IF NOT EXISTS image_url TEXT;
+
 -- 2. Fix users table - make email nullable temporarily to avoid constraint errors
 -- We'll handle null emails in the application logic instead
 ALTER TABLE users 
@@ -80,6 +93,8 @@ CREATE TABLE user_visits (
 -- 4. Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_destinations_featured ON destinations(featured);
 CREATE INDEX IF NOT EXISTS idx_destinations_rating ON destinations(rating);
+CREATE INDEX IF NOT EXISTS idx_local_delicacies_featured ON local_delicacies(featured);
+CREATE INDEX IF NOT EXISTS idx_local_delicacies_rating ON local_delicacies(rating);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_auth_user_id ON users(auth_user_id);
 CREATE INDEX IF NOT EXISTS idx_user_visits_user_id ON user_visits(user_id);
@@ -88,12 +103,18 @@ CREATE INDEX IF NOT EXISTS idx_user_visits_entity_type ON user_visits(entity_typ
 
 -- 5. Enable RLS on all tables
 ALTER TABLE destinations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE local_delicacies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_visits ENABLE ROW LEVEL SECURITY;
 
 -- 6. Create RLS policies for destinations
 DROP POLICY IF EXISTS "Allow all access to destinations" ON destinations;
 CREATE POLICY "Allow all access to destinations" ON destinations
+    FOR ALL USING (true);
+
+-- 6.1. Create RLS policies for local_delicacies
+DROP POLICY IF EXISTS "Allow all access to local_delicacies" ON local_delicacies;
+CREATE POLICY "Allow all access to local_delicacies" ON local_delicacies
     FOR ALL USING (true);
 
 -- 7. Create RLS policies for users
@@ -141,6 +162,16 @@ SELECT * FROM (VALUES
 ) AS new_destinations(name, location, description, featured, rating, review_count, is_active)
 WHERE NOT EXISTS (SELECT 1 FROM destinations WHERE name = new_destinations.name);
 
+-- 9.1. Insert sample data for local_delicacies
+INSERT INTO local_delicacies (name, origin, description, featured, rating, review_count, is_active)
+SELECT * FROM (VALUES
+    ('Lechon Cebu', 'Cebu City', 'A whole pig, spit-roasted over an open charcoal fire, stuffed with local aromatic herbs and spices like lemongrass, garlic, and green onion.', true, 4.9, 200, true),
+    ('Puso (Hanging Rice)', 'Minglanilla', 'Rice wrapped and boiled in woven coconut leaves.', false, 4.2, 45, true),
+    ('Kinilaw', 'Cebu City', 'Fresh raw fish marinated in vinegar, calamansi, ginger, and chili peppers.', true, 4.5, 120, true),
+    ('Tuslob Buwa', 'Cebu City', 'A traditional Cebuano dish made with pig brain and liver cooked in a rich sauce.', false, 4.0, 30, true)
+) AS new_delicacies(name, origin, description, featured, rating, review_count, is_active)
+WHERE NOT EXISTS (SELECT 1 FROM local_delicacies WHERE name = new_delicacies.name);
+
 -- 10. Update existing destinations to have featured status
 UPDATE destinations 
 SET featured = true, rating = 4.5, review_count = 25
@@ -162,9 +193,11 @@ DO $$
 BEGIN
     RAISE NOTICE 'All database issues fixed successfully!';
     RAISE NOTICE 'Added missing columns: featured, entity_id, auth_user_id, etc.';
+    RAISE NOTICE 'Added featured column to both destinations and local_delicacies tables';
     RAISE NOTICE 'Fixed RLS policies for all tables';
     RAISE NOTICE 'Made email nullable to prevent constraint errors';
     RAISE NOTICE 'Updated existing null emails with default values';
     RAISE NOTICE 'Added sample data for testing';
     RAISE NOTICE 'Mobile app should now work without database errors';
+    RAISE NOTICE 'Admin panel featured checkbox should now work for both destinations and delicacies';
 END $$;

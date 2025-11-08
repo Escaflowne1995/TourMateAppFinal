@@ -33,6 +33,14 @@ class VisitTrackingService {
         };
       }
 
+      // Check if attractionId is a valid UUID
+      // If it's not a UUID (like "1", "2", "3"), use local storage
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(attractionId)) {
+        console.log('Attraction ID is not a UUID, using local storage fallback');
+        return await this.markAsVisitedLocal(attractionId, attractionType, visitData);
+      }
+
       // First, check if the user_visits table exists
       const { data: tableCheck, error: tableError } = await supabase
         .from('user_visits')
@@ -66,6 +74,11 @@ class VisitTrackingService {
 
       if (error) {
         console.error('Error marking as visited:', error);
+        // Check if it's a UUID validation error
+        if (error.code === '22P02' || error.message.includes('invalid input syntax for type uuid')) {
+          console.log('UUID validation error, using local storage fallback');
+          return await this.markAsVisitedLocal(attractionId, attractionType, visitData);
+        }
         // Check if it's a table not found error
         if (error.code === 'PGRST205' || error.message.includes('Could not find the table')) {
           console.log('Database table not found, using local storage fallback');
@@ -145,6 +158,14 @@ class VisitTrackingService {
         return await this.hasVisitedLocal(attractionId, attractionType);
       }
 
+      // Check if attractionId is a valid UUID
+      // If it's not a UUID (like "1", "2", "3"), use local storage
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(attractionId)) {
+        console.log('Attraction ID is not a UUID, using local storage fallback');
+        return await this.hasVisitedLocal(attractionId, attractionType);
+      }
+
       // First, check if the user_visits table exists
       const { data: tableCheck, error: tableError } = await supabase
         .from('user_visits')
@@ -167,6 +188,11 @@ class VisitTrackingService {
 
       if (error) {
         console.error('Error checking visit status:', error);
+        // Check if it's a UUID validation error
+        if (error.code === '22P02' || error.message.includes('invalid input syntax for type uuid')) {
+          console.log('UUID validation error, using local storage fallback');
+          return await this.hasVisitedLocal(attractionId, attractionType);
+        }
         // Check if it's a table not found error
         if (error.code === 'PGRST205' || error.message.includes('Could not find the table')) {
           console.log('Database table not found, using local storage fallback');
@@ -270,6 +296,11 @@ class VisitTrackingService {
 
       if (error) {
         console.error('Error fetching visited attractions:', error);
+        // Check if it's a UUID validation error
+        if (error.code === '22P02' || error.message.includes('invalid input syntax for type uuid')) {
+          console.log('UUID validation error, using local storage fallback');
+          return await this.getVisitedAttractionsLocal(attractionType);
+        }
         // Check if it's a table not found error
         if (error.code === 'PGRST205' || error.message.includes('Could not find the table')) {
           console.log('Database table not found, using local storage fallback');

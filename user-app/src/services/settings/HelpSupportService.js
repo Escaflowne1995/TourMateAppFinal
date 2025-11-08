@@ -71,7 +71,7 @@ export const FAQ_DATA = [
     id: 'favorites',
     category: 'Features',
     question: 'How do I add places to my favorites?',
-    answer: 'To add a place to your favorites, simply tap the heart icon on any attraction card or details page. You can view all your favorites in the "Favorite Cebu Spots" section of your profile.',
+    answer: 'To add a place to your favorites, simply tap the heart icon on any attraction card or details page. You can view all your favorites in your profile section.',
     tags: ['favorites', 'heart', 'save', 'bookmark'],
     priority: 1
   },

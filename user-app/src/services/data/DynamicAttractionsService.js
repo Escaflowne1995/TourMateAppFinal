@@ -21,7 +21,7 @@ class DynamicAttractionsService {
                     address,
                     category
                 `)
-                .eq('is_featured', true)
+                .eq('featured', true)
                 .eq('is_active', true)
                 .order('rating', { ascending: false });
 
@@ -64,8 +64,9 @@ class DynamicAttractionsService {
                     address,
                     category
                 `)
-                .eq('is_popular', true)
+                .eq('featured', false)
                 .eq('is_active', true)
+                .order('rating', { ascending: false })
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -125,6 +126,7 @@ class DynamicAttractionsService {
                 `)
                 .eq('id', id)
                 .eq('is_active', true)
+                .eq('featured', true)
                 .single();
 
             if (error) {
@@ -208,6 +210,7 @@ class DynamicAttractionsService {
                     category
                 `)
                 .eq('is_active', true)
+                .eq('featured', true)
                 .or(`name.ilike.%${searchTerm}%,location.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
 
             if (error) {

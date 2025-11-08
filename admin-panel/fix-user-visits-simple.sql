@@ -9,7 +9,7 @@ CREATE TABLE user_visits (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL,
     entity_id UUID NOT NULL, -- This is the missing column causing the error
-    entity_type TEXT NOT NULL,
+    entity_type TEXT NOT NULL CHECK (entity_type IN ('destination', 'delicacy', 'restaurant', 'hotel', 'eatery')),
     visit_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     rating INTEGER,
     review_text TEXT,

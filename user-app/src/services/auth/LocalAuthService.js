@@ -482,7 +482,6 @@ class LocalAuthService {
             avatar_url: safeProfileData.avatar_url || '',
             status: 'ACTIVE',
             is_active: true,
-            favorite_spots: safeProfileData.favorite_spots || [],
             total_reviews: safeProfileData.total_reviews || 0,
             updated_at: new Date().toISOString()
           }, { onConflict: 'auth_user_id' });

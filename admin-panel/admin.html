@@ -98,6 +98,46 @@
             transform: scale(1.05);
         }
 
+        /* Auto-save indicators */
+        .auto-save-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .auto-save-saving {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+        }
+        
+        .auto-save-saved {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+        
+        .auto-save-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        
+        .auto-save-hidden {
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+        }
+
         /* Styling for the horizontal navigation (Header) */
         .top-nav {
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -115,6 +155,28 @@
         }
         .nav-link:hover {
             background-color: #f3f4f6;
+        }
+
+        /* Dropdown styling */
+        .dropdown-menu {
+            transform: translateY(-10px);
+            transition: all 0.2s ease-in-out;
+        }
+        .group:hover .dropdown-menu {
+            transform: translateY(0);
+        }
+        
+        /* Mobile dropdown support */
+        @media (max-width: 768px) {
+            .group:hover .dropdown-menu {
+                position: static;
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                box-shadow: none;
+                border: none;
+                background: transparent;
+            }
         }
         
         /* Content Card Styling */
@@ -141,24 +203,27 @@
             <h1 class="text-2xl font-bold text-gray-900">TourMate Admin</h1>
             
             <!-- Navigation Links -->
-            <nav class="hidden md:flex space-x-2">
+            <nav class="hidden md:flex space-x-2" id="main-navigation">
                 <a href="#dashboard" class="nav-link flex items-center" data-route="dashboard">
                     <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l-2-2m-2 2v-1h3v3m-2-3v3m-2-3v3m2-3v3m-2-3v3m-2-3v3M9 21h6a1 1 0 001-1v-4a1 1 0 00-1-1h-2a1 1 0 00-1 1v4a1 1 0 001 1z"></path></svg>
                     Dashboard
                 </a>
-                <a href="#users" class="nav-link flex items-center" data-route="users">
+                <a href="#users" class="nav-link flex items-center" data-route="users" data-permission="users">
                     <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20v-2M9 11A6 6 0 109 5a6 6 0 000 6zm0 0a6 6 0 100 0zM7 20h5v-2a3 3 0 00-3-3H4a3 3 0 00-3 3v2zM15 11h.01M19 11h.01"></path></svg>
                     Users
                 </a>
-                <a href="#local_delicacies" class="nav-link flex items-center" data-route="local_delicacies">
+                <a href="#local_delicacies" class="nav-link flex items-center" data-route="local_delicacies" data-permission="delicacies">
                     <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     Delicacies
                 </a>
-                <a href="#destinations" class="nav-link flex items-center" data-route="destinations">
+                <a href="#destinations" class="nav-link flex items-center" data-route="destinations" data-permission="destinations">
                     <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     Destinations
                 </a>
-                <!-- Other categories are hidden in the top nav for space, but can be added back -->
+                <!-- Additional navigation items for superadmin only -->
+                <div id="superadmin-nav" class="hidden">
+                    <!-- No additional items for superadmin - keeping it clean with just main content management -->
+                </div>
             </nav>
 
             <!-- User and Logout -->
@@ -167,7 +232,9 @@
                     <div id="status-indicator" class="w-2 h-2 rounded-full bg-yellow-500"></div>
                     <span id="status-text" class="text-xs text-gray-500">Connecting...</span>
                 </div>
-                <span id="user-display" class="text-sm font-semibold text-gray-500 hidden md:inline">Super Administrator</span>
+                <span id="user-display" class="text-sm font-semibold text-gray-500 hidden md:inline">
+                    <span id="user-role" class="px-2 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">Super Admin</span>
+                </span>
                 <button onclick="confirmLogout()" id="logout-btn" class="flex items-center px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600 transition duration-150 text-white shadow-md focus-ring-light">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                     Logout
@@ -196,7 +263,7 @@
 
     <!-- Global Modal Structure (for Add/Edit/Confirm Forms) -->
     <div id="modal-container" class="fixed inset-0 bg-gray-900/40 z-40 hidden items-center justify-center p-4">
-        <div id="modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 md:p-8 transform transition-all duration-300 scale-95 opacity-0 border border-gray-200">
+        <div id="modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] transform transition-all duration-300 scale-95 opacity-0 border border-gray-200 flex flex-col p-6 md:p-8">
             <!-- Modal content will be injected here -->
         </div>
     </div>
@@ -210,6 +277,53 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1em11Z2x4emthenR6eGplcnltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTAwOTUsImV4cCI6MjA3MjYyNjA5NX0.Z4kYsI4OIOvMo1o8uKg6ckBpu2LDAA7q6iKReJUftHw';
         
         let isLoggedIn = false; 
+        let currentUser = null;
+        let userPermissions = {};
+
+        // ====================================================================
+        // 1.1. AUTHENTICATION PERSISTENCE FUNCTIONS
+        // ====================================================================
+        
+        const saveAuthState = () => {
+            const authState = {
+                isLoggedIn: isLoggedIn,
+                currentUser: currentUser,
+                userPermissions: userPermissions,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('tourmate_admin_auth', JSON.stringify(authState));
+        };
+
+        const loadAuthState = () => {
+            try {
+                const authData = localStorage.getItem('tourmate_admin_auth');
+                if (authData) {
+                    const authState = JSON.parse(authData);
+                    // Check if auth state is not older than 24 hours
+                    const maxAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+                    if (Date.now() - authState.timestamp < maxAge) {
+                        isLoggedIn = authState.isLoggedIn;
+                        currentUser = authState.currentUser;
+                        userPermissions = authState.userPermissions;
+                        return true;
+                    } else {
+                        // Auth state is too old, clear it
+                        clearAuthState();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading auth state:', error);
+                clearAuthState();
+            }
+            return false;
+        };
+
+        const clearAuthState = () => {
+            localStorage.removeItem('tourmate_admin_auth');
+            isLoggedIn = false;
+            currentUser = null;
+            userPermissions = {};
+        };
 
         // --- MOCK CORE DATA ---
         let localDelicaciesData = [
@@ -220,9 +334,6 @@
             { id: 'dest1', name: 'Basilica del Santo Niño', location: 'Cebu City', description: 'The Basilica Minore del Santo Niño is the oldest Roman Catholic church in the Philippines.', is_active: true, created_at: new Date(Date.now() - 60000).toISOString() },
             { id: 'dest2', name: 'Magellan’s Cross', location: 'Cebu City', description: 'Historical landmark of the arrival of Christianity.', is_active: true, created_at: new Date(Date.now() - 40000).toISOString() },
             { id: 'dest3', name: 'Fort San Pedro', location: 'Cebu City', description: 'Fort San Pedro is the oldest fort in the Philippines. It was established in 1738 and serves as the sanctuary for the Santo Niño de Cebu.', is_active: true, created_at: new Date(Date.now() - 30000).toISOString() },
-        ];
-        let localSpotsData = [
-            { id: 'spot1', name: 'Sirao Flower Garden', location: 'Cebu City', description: 'Known as the Little Amsterdam of Cebu.', is_active: true, created_at: new Date(Date.now() - 70000).toISOString() },
         ];
         let hotelsData = [
             { id: 'hotel1', name: 'Quest Hotel & Conference Center Cebu', city: 'Cebu City', stars: 4, description: 'Mid-range hotel near Ayala Center.', is_active: true, created_at: new Date(Date.now() - 80000).toISOString() },
@@ -241,6 +352,38 @@
             { id: 'user3', email: 'tourist@visitor.com', name: 'New Visitor', role: 'viewer', phone: '+639171234569', location: 'Cebu City, Philippines', status: 'OFFLINE', created_at: new Date(Date.now() - 20000).toISOString() }
         ];
 
+        // --- MOCK ADMIN USERS DATA ---
+        let adminUsersData = [
+            { 
+                id: 'admin1', 
+                email: 'superadmin@tourmate.com', 
+                name: 'Super Administrator', 
+                role: 'superadmin',
+                permissions: {
+                    users: true, 
+                    destinations: true, 
+                    delicacies: true, 
+                    settings: true
+                },
+                is_active: true,
+                created_at: new Date(Date.now() - 120000).toISOString() 
+            },
+            { 
+                id: 'admin2', 
+                email: 'admin@tourmate.com', 
+                name: 'Content Administrator', 
+                role: 'admin',
+                permissions: {
+                    users: false, 
+                    destinations: true, 
+                    delicacies: true, 
+                    settings: false
+                },
+                is_active: true,
+                created_at: new Date(Date.now() - 100000).toISOString() 
+            }
+        ];
+
         let userPreferencesData = [
             { user_id: 'user2', content_id: 'd1', type: 'local_delicacies', action: 'Loves' },
             { user_id: 'user2', content_id: 'dest1', type: 'destinations', action: 'Visited' },
@@ -255,7 +398,6 @@
         const getStore = (tableName) => {
             if (tableName === 'local_delicacies') return localDelicaciesData;
             if (tableName === 'destinations') return destinationsData;
-            if (tableName === 'local_spots') return localSpotsData;
             if (tableName === 'hotels') return hotelsData;
             if (tableName === 'restaurants') return restaurantsData;
             if (tableName === 'eateries') return eateriesData;
@@ -267,6 +409,26 @@
         if (typeof window.supabase !== 'undefined' && SUPABASE_ANON_KEY !== 'YOUR_ANON_KEY_HERE') {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             console.log("Using real Supabase client.");
+            
+            // Test connection
+            supabase.from('local_delicacies').select('count').then(result => {
+                if (result.error) {
+                    console.error("Supabase connection test failed:", result.error);
+                    updateConnectionStatus('error', 'Supabase connection failed');
+                } else {
+                    console.log("Supabase connection test successful");
+                    updateConnectionStatus('connected');
+                }
+            }).catch(error => {
+                console.error("Supabase connection error:", error);
+                updateConnectionStatus('error', 'Connection error');
+            });
+            
+            // Test a simple insert to see if it works
+            console.log("Testing Supabase insert capability...");
+            supabase.from('local_delicacies').select('*').limit(1).then(result => {
+                console.log("Supabase select test result:", result);
+            });
         } else {
             console.warn("Using mock in-memory data. Please replace keys and uncomment the Supabase script tag.");
 
@@ -283,6 +445,14 @@
                         await new Promise(resolve => setTimeout(resolve, 500));
                         const newItem = { ...item, id: crypto.randomUUID(), created_at: new Date().toISOString() };
                         dataStore.push(newItem);
+                        
+                        // Update the global data store based on table name
+                        if (tableName === 'local_delicacies') localDelicaciesData = dataStore;
+                        else if (tableName === 'destinations') destinationsData = dataStore;
+                        else if (tableName === 'hotels') hotelsData = dataStore;
+                        else if (tableName === 'restaurants') restaurantsData = dataStore;
+                        else if (tableName === 'eateries') eateriesData = dataStore;
+                        
                         handleRouting(); 
                         return { data: [newItem], error: null };
                     },
@@ -304,7 +474,6 @@
                         // Mutate the global array directly based on table name
                         if (tableName === 'local_delicacies') localDelicaciesData = localDelicaciesData.filter(d => d.id !== id);
                         else if (tableName === 'destinations') destinationsData = destinationsData.filter(d => d.id !== id);
-                        else if (tableName === 'local_spots') localSpotsData = localSpotsData.filter(d => d.id !== id);
                         else if (tableName === 'hotels') hotelsData = hotelsData.filter(d => d.id !== id);
                         else if (tableName === 'restaurants') restaurantsData = restaurantsData.filter(d => d.id !== id);
                         else if (tableName === 'eateries') eateriesData = eateriesData.filter(d => d.id !== id);
@@ -347,7 +516,66 @@
         }
 
         // ====================================================================
-        // 2. CORE UTILITY FUNCTIONS
+        // 2. ROLE-BASED ACCESS CONTROL FUNCTIONS
+        // ====================================================================
+
+        const checkPermission = (permission) => {
+            if (!currentUser || !userPermissions) return false;
+            return userPermissions[permission] === true;
+        };
+
+        const updateNavigation = () => {
+            const navLinks = document.querySelectorAll('[data-permission]');
+            const superadminNav = document.getElementById('superadmin-nav');
+            
+            navLinks.forEach(link => {
+                const permission = link.getAttribute('data-permission');
+                if (permission && !checkPermission(permission)) {
+                    link.style.display = 'none';
+                } else {
+                    link.style.display = 'flex';
+                }
+            });
+
+            // Show/hide superadmin navigation
+            if (superadminNav) {
+                if (currentUser && currentUser.role === 'superadmin') {
+                    superadminNav.classList.remove('hidden');
+                } else {
+                    superadminNav.classList.add('hidden');
+                }
+            }
+        };
+
+        const updateUserDisplay = () => {
+            const userRole = document.getElementById('user-role');
+            
+            if (currentUser && userRole) {
+                userRole.textContent = currentUser.role === 'superadmin' ? 'Super Admin' : 'Admin';
+                userRole.className = currentUser.role === 'superadmin' 
+                    ? 'px-2 py-1 text-xs bg-purple-100 text-purple-600 rounded-full'
+                    : 'px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded-full';
+            }
+        };
+
+        const authenticateUser = (email, password) => {
+            const adminUser = adminUsersData.find(user => 
+                user.email === email && user.is_active === true
+            );
+            
+            if (adminUser) {
+                // For demo purposes, accept any password
+                // In production, you would verify the password hash
+                currentUser = adminUser;
+                userPermissions = adminUser.permissions;
+                return { success: true, user: adminUser };
+            }
+            
+            return { success: false, error: 'Invalid credentials or user not found.' };
+        };
+
+        // ====================================================================
+        // 3. CORE UTILITY FUNCTIONS
         // ====================================================================
 
         const $ = selector => document.querySelector(selector);
@@ -359,6 +587,10 @@
             const img = document.getElementById(previewId.replace('-preview', '-img'));
             
             if (url && url.trim() !== '') {
+                // Clear any previous error state
+                img.onerror = function() {
+                    this.parentElement.classList.add('hidden');
+                };
                 img.src = url;
                 preview.classList.remove('hidden');
             } else {
@@ -405,7 +637,7 @@
             
             if (status === 'connected') {
                 indicator.className = 'w-2 h-2 rounded-full bg-green-500';
-                text.textContent = 'Connected to Supabase';
+                text.textContent = '';
             } else if (status === 'error') {
                 indicator.className = 'w-2 h-2 rounded-full bg-red-500';
                 text.textContent = 'Using sample data';
@@ -440,7 +672,6 @@
             let dataStore = [];
             if (type === 'local_delicacies') dataStore = localDelicaciesData;
             else if (type === 'destinations') dataStore = destinationsData;
-            else if (type === 'local_spots') dataStore = localSpotsData;
             else if (type === 'hotels') dataStore = hotelsData;
             else if (type === 'restaurants') dataStore = restaurantsData;
             else if (type === 'eateries') dataStore = eateriesData;
@@ -464,6 +695,9 @@
                 }, 10);
             },
             hide: () => {
+                // Clear auto-save when modal is hidden
+                clearAutoSave();
+                
                 modal.content.classList.add('scale-95', 'opacity-0');
                 modal.content.addEventListener('transitionend', () => {
                     modal.container.classList.remove('flex');
@@ -474,7 +708,7 @@
             renderForm: (type, item = {}) => {
                 const isEdit = !!item.id;
                 const endpoint = type;
-                const title = `${isEdit ? 'Edit' : 'Add'} ${type.replace(/_/g, ' ').slice(0, -1)}`;
+                const title = `${isEdit ? 'Edit' : 'Add'} ${type.replace(/_/g, ' ').replace('delicacie', 'delicacy').slice(0, -1)}`;
 
                 let fields = [];
                 
@@ -621,7 +855,7 @@
                         return `
                             <div class="mb-4">
                                 <label for="${field.id}" class="block text-sm font-medium text-gray-700">${field.label}</label>
-                                <input type="${field.type}" id="${field.id}" name="${field.id}" ${field.required ? 'required' : ''} ${disabledAttr} class="${inputClasses}" value="${value}" placeholder="${placeholder}" oninput="previewImage(this.value, '${field.id}-preview')">
+                                <input type="${field.type}" id="${field.id}" name="${field.id}" ${field.required ? 'required' : ''} ${disabledAttr} class="${inputClasses}" value="${value}" placeholder="${placeholder}" oninput="previewImage(this.value, '${field.id}-preview')" onpaste="setTimeout(() => previewImage(this.value, '${field.id}-preview'), 10)" onchange="previewImage(this.value, '${field.id}-preview')">
                                 <p class="mt-1 text-xs text-gray-500">Enter a direct image URL (e.g., https://example.com/image.jpg)</p>
                                 <div id="${field.id}-preview" class="mt-2 ${hasExistingImage ? '' : 'hidden'}">
                                     <img id="${field.id}-img" src="${value || ''}" alt="Image preview" class="w-full h-48 object-cover rounded-lg border border-gray-300" onerror="this.parentElement.classList.add('hidden')">
@@ -665,42 +899,68 @@
                 }).join('');
 
                 modal.content.innerHTML = `
-                    <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
+                    <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-6 flex-shrink-0">
                         <h2 class="text-2xl font-bold text-gray-900">${title}</h2>
                         <button onclick="modal.hide()" class="text-gray-500 hover:text-gray-700 transition duration-150 p-2 rounded-full hover:bg-gray-100">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                     </div>
-                    <form id="${endpoint}-form">
-                        ${formFields}
-                        <div class="flex justify-end space-x-3 mt-6">
-                            <button type="button" onclick="modal.hide()" class="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400 transition duration-150 font-semibold focus-ring-light text-gray-700">Cancel</button>
-                            ${isEdit ? 
-                                `<button type="submit" id="submit-btn" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-150 font-semibold text-white focus-ring-light shadow-md shadow-blue-500/50">
-                                    <span id="submit-text">Save Changes</span>
-                                    <svg id="submit-spinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                </button>` : 
-                                endpoint === 'users' ? '' : `<button type="submit" id="submit-btn" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-150 font-semibold text-white focus-ring-light shadow-md shadow-blue-500/50">
-                                    <span id="submit-text">Add Item</span>
-                                    <svg id="submit-spinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                </button>`
-                            }
-                        </div>
-                    </form>
+                    <div class="flex-1 overflow-y-auto">
+                        <form id="${endpoint}-form">
+                            ${formFields}
+                        </form>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 flex-shrink-0">
+                        <button type="button" onclick="modal.hide()" class="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400 transition duration-150 font-semibold focus-ring-light text-gray-700">Cancel</button>
+                        ${isEdit ? 
+                            `<button type="submit" id="submit-btn" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-150 font-semibold text-white focus-ring-light shadow-md shadow-blue-500/50">
+                                <span id="submit-text">Save Changes</span>
+                                <svg id="submit-spinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </button>` : 
+                            endpoint === 'users' ? '' :                             `<button type="submit" id="submit-btn" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-150 font-semibold text-white focus-ring-light shadow-md shadow-blue-500/50">
+                                <span id="submit-text">Save</span>
+                                <svg id="submit-spinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </button>`
+                        }
+                    </div>
                 `;
 
-                $('#' + endpoint + '-form').addEventListener('submit', (e) => modal.handleSubmit(e, endpoint, isEdit, item.id));
+                $('#' + endpoint + '-form').addEventListener('submit', (e) => {
+                    console.log('Form submit event triggered!');
+                    modal.handleSubmit(e, endpoint, isEdit, item.id);
+                });
+                
+                // Also add click listener to Save button as backup
+                setTimeout(() => {
+                    const saveBtn = $('#submit-btn');
+                    if (saveBtn) {
+                        saveBtn.addEventListener('click', (e) => {
+                            console.log('Save button clicked!');
+                            e.preventDefault();
+                            const form = $('#' + endpoint + '-form');
+                            if (form) {
+                                const formEvent = new Event('submit', { bubbles: true, cancelable: true });
+                                form.dispatchEvent(formEvent);
+                            }
+                        });
+                    }
+                }, 100);
+                
+                // Set up auto-save for the form
+                setupAutoSave(endpoint, item.id);
+                
                 modal.show();
             },
 
             handleSubmit: async (e, endpoint, isEdit, id) => {
                 e.preventDefault();
+                console.log('Form submit triggered for:', endpoint, 'isEdit:', isEdit, 'id:', id);
                 showLoading(true);
                 
                 // Set button loading state
@@ -710,12 +970,37 @@
                 
                 if (submitBtn) {
                     submitBtn.disabled = true;
-                    if (submitText) submitText.textContent = isEdit ? 'Saving...' : 'Adding...';
+                    if (submitText) submitText.textContent = isEdit ? 'Saving...' : 'Saving...';
                     if (submitSpinner) submitSpinner.classList.remove('hidden');
                 }
 
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
+                console.log('Form data:', data);
+                
+                // Validate required fields - check for both location and origin
+                const requiredFields = ['name'];
+                // Add location or origin based on the endpoint
+                if (endpoint === 'local_delicacies') {
+                    requiredFields.push('origin');
+                } else {
+                    requiredFields.push('location');
+                }
+                const missingFields = requiredFields.filter(field => !data[field] || data[field].trim() === '');
+                console.log('Required fields:', requiredFields);
+                console.log('Missing fields:', missingFields);
+                
+                if (missingFields.length > 0) {
+                    console.log('Validation failed - missing fields:', missingFields);
+                    // Reset button state on validation error
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        if (submitText) submitText.textContent = isEdit ? 'Save Changes' : 'Save';
+                        if (submitSpinner) submitSpinner.classList.add('hidden');
+                    }
+                    showLoading(false);
+                    return;
+                }
                 
                 // Handle custom opening hours
                 if (data.opening_hours === 'Custom Hours') {
@@ -726,8 +1011,17 @@
                 }
                 
                 // Handle checkbox values (convert to boolean)
+                // Checkboxes that are unchecked don't appear in FormData, so we need to handle undefined
                 if (data.featured !== undefined) {
                     data.featured = data.featured === 'on' || data.featured === true;
+                } else {
+                    // If featured is undefined, it means the checkbox was unchecked
+                    data.featured = false;
+                }
+                
+                // Ensure is_active is set to true for new items
+                if (!isEdit) {
+                    data.is_active = true;
                 }
                 
                 let response;
@@ -742,64 +1036,137 @@
                         }
                         return acc;
                     }, {});
+                    console.log('Data to save:', updates);
 
                     if (isEdit) {
+                        console.log('Updating existing item with ID:', id);
                         response = await supabase.from(endpoint).update(updates).eq('id', id);
                         successMessage = `${endpoint.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} updated successfully!`;
                     } else {
+                        console.log('Creating new item');
                         response = await supabase.from(endpoint).insert(data);
                         successMessage = `${endpoint.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} added successfully!`;
                     }
+                    console.log('Save response:', response);
 
                     if (response.error) {
-                        showToast(`Error: ${response.error.message}`, true);
                         // Reset button state on error
                         if (submitBtn) {
                             submitBtn.disabled = false;
-                            if (submitText) submitText.textContent = isEdit ? 'Save Changes' : 'Add Item';
+                            if (submitText) submitText.textContent = isEdit ? 'Save Changes' : 'Save';
                             if (submitSpinner) submitSpinner.classList.add('hidden');
                         }
                     } else {
-                        showToast(successMessage);
+                        // Reset unsaved changes flag
+                        hasUnsavedDropdownChanges = false;
                         // Close modal immediately on success
                         modal.hide();
-                        
-                        // Show auto-refresh indicator
-                        const refreshIndicator = document.createElement('div');
-                        refreshIndicator.className = 'auto-refresh-indicator';
-                        refreshIndicator.innerHTML = `
-                            <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
-                            Auto-refreshing data & syncing to app...
-                        `;
-                        document.body.appendChild(refreshIndicator);
                         
                         // Auto-refresh the current view after successful save
                         setTimeout(() => {
                             handleRouting();
-                            // Remove refresh indicator after routing
-                            setTimeout(() => {
-                                if (refreshIndicator.parentNode) {
-                                    refreshIndicator.parentNode.removeChild(refreshIndicator);
-                                }
-                                // Show final success message
-                                showToast('✅ Data saved and synced to user app!', false);
-                            }, 1000);
-                        }, 1500); // Small delay to show the success message and refresh notification
+                        }, 500);
                     }
                 } catch (error) {
-                    showToast(`An unexpected error occurred: ${error.message}`, true);
                     // Reset button state on error
                     if (submitBtn) {
                         submitBtn.disabled = false;
-                        if (submitText) submitText.textContent = isEdit ? 'Save Changes' : 'Add Item';
+                        if (submitText) submitText.textContent = isEdit ? 'Save Changes' : 'Save';
                         if (submitSpinner) submitSpinner.classList.add('hidden');
                     }
                 } finally {
                     showLoading(false);
                 }
             }
+        };
+
+        // ====================================================================
+        // 3.5. AUTO-SAVE FUNCTIONALITY
+        // ====================================================================
+
+        let autoSaveTimeout = null;
+        let currentFormData = null;
+        let currentEndpoint = null;
+        let currentItemId = null;
+        let isEditMode = false;
+        let hasUnsavedDropdownChanges = false;
+
+        // Auto-save indicators removed since auto-save is disabled
+
+        const validateFormData = (data) => {
+            const requiredFields = ['name'];
+            // Add location or origin based on the current endpoint
+            if (currentEndpoint === 'local_delicacies') {
+                requiredFields.push('origin');
+            } else {
+                requiredFields.push('location');
+            }
+            const missingFields = requiredFields.filter(field => {
+                const value = data[field];
+                return !value || value.trim() === '';
+            });
+            return missingFields.length === 0;
+        };
+
+        // Auto-save functionality removed - all saves are manual
+
+        const setupAutoSave = (endpoint, itemId = null) => {
+            currentEndpoint = endpoint;
+            currentItemId = itemId;
+            isEditMode = !!itemId;
+
+            // Clear existing timeout
+            if (autoSaveTimeout) {
+                clearTimeout(autoSaveTimeout);
+            }
+
+            // Auto-save is completely disabled - all changes require manual save
+            const form = $('#' + endpoint + '-form');
+            if (!form) return;
+
+            // Mark form as having unsaved changes by default
+            hasUnsavedDropdownChanges = true;
+            updateSaveButtonState();
+
+            // Add change listeners to mark form as dirty (but don't auto-save)
+            const allInputs = form.querySelectorAll('input, select, textarea');
+            allInputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    hasUnsavedDropdownChanges = true;
+                    updateSaveButtonState();
+                });
+                input.addEventListener('change', () => {
+                    hasUnsavedDropdownChanges = true;
+                    updateSaveButtonState();
+                });
+            });
+
+            console.log('Auto-save disabled. All changes require manual save.');
+        };
+
+        const updateSaveButtonState = () => {
+            const submitBtn = $('#submit-btn');
+            if (submitBtn) {
+                // Always show as needing manual save since auto-save is disabled
+                submitBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+                submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                const submitText = $('#submit-text');
+                if (submitText) {
+                    submitText.textContent = isEditMode ? 'Save Changes*' : 'Save*';
+                }
+            }
+        };
+
+        const clearAutoSave = () => {
+            if (autoSaveTimeout) {
+                clearTimeout(autoSaveTimeout);
+                autoSaveTimeout = null;
+            }
+            currentFormData = null;
+            currentEndpoint = null;
+            currentItemId = null;
+            isEditMode = false;
+            hasUnsavedDropdownChanges = false;
         };
 
         // ====================================================================
@@ -830,7 +1197,11 @@
                         <form id="login-form" novalidate>
                             <div class="mb-4">
                                 <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                                <input type="email" id="email" name="email" required value="admin@admin.com" class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus-ring-light p-3" placeholder="admin@admin.com">
+                                <select id="email" name="email" required class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus-ring-light p-3">
+                                    <option value="">Select Admin Account</option>
+                                    <option value="superadmin@tourmate.com">Super Administrator (Full Access)</option>
+                                    <option value="admin@tourmate.com">Content Administrator (Limited Access)</option>
+                                </select>
                                 <div id="email-error" class="hidden mt-1 text-sm text-red-600"></div>
                             </div>
                             <div class="mb-6">
@@ -971,16 +1342,21 @@
             setLoginButtonState(true);
 
             try {
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                // Use the new authentication system
+                const authResult = authenticateUser(email, password);
                 
-                if (error) {
-                    setLoginButtonState(false);
-                    showErrorMessage(error.message || 'Invalid credentials. Please try again.');
-                } else if (data.user) {
+                if (authResult.success) {
                     isLoggedIn = true;
+                    // Save authentication state to localStorage
+                    saveAuthState();
+                    updateNavigation();
+                    updateUserDisplay();
                     // Redirect immediately after successful login
                     window.location.hash = '#dashboard';
                     handleRouting();
+                } else {
+                    setLoginButtonState(false);
+                    showErrorMessage(authResult.error || 'Invalid credentials. Please try again.');
                 }
             } catch (error) {
                 setLoginButtonState(false);
@@ -1015,19 +1391,14 @@
         window.handleLogout = async () => {
             showLoading(true);
             try {
-                const { error } = await supabase.auth.signOut();
+                // Clear authentication state from localStorage and memory
+                clearAuthState();
+                
                 showLoading(false);
-                if (error) {
-                    showToast('Error during logout.', true);
-                } else {
-                    isLoggedIn = false;
-                    showToast('Logged out successfully.');
-                    window.location.hash = '#login';
-                    handleRouting();
-                }
+                window.location.hash = '#login';
+                handleRouting();
             } catch (error) {
                 showLoading(false);
-                showToast('Logout failed: ' + error.message, true);
             }
         };
 
@@ -1041,7 +1412,6 @@
         const getAggregatedData = () => [
             ...localDelicaciesData,
             ...destinationsData,
-            ...localSpotsData,
             ...hotelsData,
             ...restaurantsData,
             ...eateriesData
@@ -1054,26 +1424,47 @@
                 active_users: usersData.filter(u => u.status === 'ACTIVE').length,
                 destinations: destinationsData.length,
                 local_delicacies: localDelicaciesData.length,
-                local_spots: localSpotsData.length,
                 hotels: hotelsData.length,
                 restaurants: restaurantsData.length,
                 eateries: eateriesData.length
             };
             
+            const userName = currentUser ? currentUser.name : 'Administrator';
+            const userRole = currentUser ? currentUser.role : 'admin';
+            const isSuperAdmin = userRole === 'superadmin';
+            
             contentContainer.innerHTML = `
                 <div class="mb-10">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-1">Welcome back, Super Administrator!</h2>
-                    <p class="text-gray-500">Here's What's Happening with your tourist app today</p>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-1">Welcome back, ${userName}!</h2>
+                    <p class="text-gray-500">Here's what's happening with your tourist app today</p>
+                    <div class="mt-2">
+                        <span class="px-3 py-1 text-sm font-medium rounded-full ${isSuperAdmin ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}">
+                            ${isSuperAdmin ? 'Super Administrator' : 'Content Administrator'}
+                        </span>
+                    </div>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
                     <!-- Dashboard Stat Cards (Matching image_601099.png style) -->
-                    ${[
-                        { key: 'Total Users', count: counts.users, color: 'blue', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20v-2M9 11A6 6 0 109 5a6 6 0 000 6zm0 0a6 6 0 100 0zM7 20h5v-2a3 3 0 00-3-3H4a3 3 0 00-3 3v2zM15 11h.01M19 11h.01' },
-                        { key: 'Active Users', count: counts.active_users, color: 'green', icon: 'M5 13l4 4L19 7' },
-                        { key: 'Destinations', count: counts.destinations, color: 'orange', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.244-4.243a8 8 0 1111.314 0z' },
-                        { key: 'Delicacies', count: counts.local_delicacies, color: 'red', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' }
-                    ].map(stat => `
+                    ${(() => {
+                        const stats = [];
+                        
+                        if (checkPermission('users')) {
+                            stats.push({ key: 'Total Users', count: counts.users, color: 'blue', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20v-2M9 11A6 6 0 109 5a6 6 0 000 6zm0 0a6 6 0 100 0zM7 20h5v-2a3 3 0 00-3-3H4a3 3 0 00-3 3v2zM15 11h.01M19 11h.01' });
+                            stats.push({ key: 'Active Users', count: counts.active_users, color: 'green', icon: 'M5 13l4 4L19 7' });
+                        }
+                        
+                        if (checkPermission('destinations')) {
+                            stats.push({ key: 'Destinations', count: counts.destinations, color: 'orange', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.244-4.243a8 8 0 1111.314 0z' });
+                        }
+                        
+                        if (checkPermission('delicacies')) {
+                            stats.push({ key: 'Delicacies', count: counts.local_delicacies, color: 'red', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' });
+                        }
+                        
+                        
+                        return stats;
+                    })().map(stat => `
                         <div class="bg-white p-4 rounded-xl shadow-md border-t-4 border-${stat.color}-500 flex items-center justify-between content-card">
                             <div class="flex items-center space-x-3">
                                 <div class="p-3 bg-${stat.color}-100 rounded-full">
@@ -1237,13 +1628,39 @@
 
 
         const renderManagementView = async (endpoint, title) => {
+            // Check permissions before rendering
+            const permissionMap = {
+                'users': 'users',
+                'local_delicacies': 'delicacies',
+                'destinations': 'destinations'
+            };
+            
+            const requiredPermission = permissionMap[endpoint];
+            if (requiredPermission && !checkPermission(requiredPermission)) {
+                contentContainer.innerHTML = `
+                    <div class="flex items-center justify-center min-h-96">
+                        <div class="text-center">
+                            <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Access Denied</h3>
+                            <p class="text-gray-600 mb-4">You don't have permission to access ${title} management.</p>
+                            <button onclick="window.location.hash = '#dashboard'" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                Return to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
             showLoading();
             const totalItems = getStore(endpoint).length;
             
             // Add timeout to prevent infinite loading
             const timeoutId = setTimeout(() => {
                 showLoading(false);
-                showToast('Request timed out. Using sample data.', true);
+                // Request timed out, using sample data
                 const mockData = getStore(endpoint);
                 const mockPreferences = endpoint === 'users' ? userPreferencesData : [];
                 
@@ -1282,10 +1699,23 @@
                             </button>
                             <button id="add-item-btn" class="flex items-center px-3 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-150 font-semibold text-white shadow-md shadow-blue-500/30 focus-ring-light">
                                 <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                                Add ${title.split(' ')[0]}
+                                Add ${title.split(' ')[0].replace('delicacie', 'delicacy')}
                             </button>
                         </div>
                     `}
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="mb-6">
+                    <div class="relative max-w-md">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" id="search-${endpoint}" placeholder="Search ${title.toLowerCase()}..." 
+                               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
                 </div>
                 <div id="${endpoint}-list">
                     <!-- Data will be inserted here -->
@@ -1293,7 +1723,52 @@
             `;
 
             if (endpoint !== 'users') {
-                 $('#add-item-btn').addEventListener('click', () => modal.renderForm(endpoint));
+                const addButton = $('#add-item-btn');
+                if (addButton) {
+                    addButton.addEventListener('click', () => modal.renderForm(endpoint));
+                }
+            }
+
+            // Add search functionality
+            const searchInput = $(`#search-${endpoint}`);
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase().trim();
+                    const allItems = getStore(endpoint);
+                    let filteredItems = allItems;
+                    
+                    if (searchTerm) {
+                        filteredItems = allItems.filter(item => {
+                            // Search in name, location, description, and other relevant fields
+                            const searchableFields = [
+                                item.name,
+                                item.location,
+                                item.description,
+                                item.origin,
+                                item.city,
+                                item.cuisine,
+                                item.type
+                            ].filter(field => field).map(field => field.toLowerCase());
+                            
+                            return searchableFields.some(field => field.includes(searchTerm));
+                        });
+                    }
+                    
+                    // Update the count in the header
+                    const countElements = document.querySelectorAll('h3');
+                    const countElement = Array.from(countElements).find(el => el.textContent.includes(title));
+                    if (countElement) {
+                        countElement.textContent = `${title} (${filteredItems.length})`;
+                    }
+                    
+                    // Re-render the filtered items
+                    if (endpoint === 'users') {
+                        const preferences = endpoint === 'users' ? userPreferencesData : [];
+                        $('#' + endpoint + '-list').innerHTML = createTableMarkup(filteredItems, endpoint, preferences);
+                    } else {
+                        $('#' + endpoint + '-list').innerHTML = createCardMarkup(filteredItems, endpoint);
+                    }
+                });
             }
 
             try {
@@ -1312,7 +1787,6 @@
                     // Update in-memory data store
                     if (endpoint === 'local_delicacies') localDelicaciesData = mockData;
                     else if (endpoint === 'destinations') destinationsData = mockData;
-                    else if (endpoint === 'local_spots') localSpotsData = mockData;
                     else if (endpoint === 'hotels') hotelsData = mockData;
                     else if (endpoint === 'restaurants') restaurantsData = mockData;
                     else if (endpoint === 'eateries') eateriesData = mockData;
@@ -1325,7 +1799,7 @@
                         $('#' + endpoint + '-list').innerHTML = createCardMarkup(mockData, endpoint);
                     }
                     
-                    showToast(`Using sample data for ${endpoint.replace(/_/g, ' ')}. Connect to Supabase for real data.`, true);
+                    // Using sample data for fallback
                 } else {
                     // Successfully fetched from Supabase
                     updateConnectionStatus('connected');
@@ -1359,7 +1833,7 @@
                 } else {
                     $('#' + endpoint + '-list').innerHTML = createCardMarkup(mockData, endpoint);
                 }
-                showToast(`Using sample data for ${endpoint.replace(/_/g, ' ')}. Check connection.`, true);
+                // Using sample data due to connection error
             } finally {
                 clearTimeout(timeoutId);
                 showLoading(false);
@@ -1375,30 +1849,31 @@
             }
         };
 
-        window.deleteItem = (endpoint, id, name) => {
-            const onConfirm = async () => {
-                showLoading(true);
-                try {
-                    const response = await supabase.from(endpoint).delete(id); 
-
-                    if (response.error) {
-                        showToast(`Delete Error: ${response.error.message}`, true);
-                    } else {
-                        showToast(`${name} deleted successfully.`);
-                    }
-                } catch (error) {
-                    showToast(`An unexpected error occurred during deletion: ${error.message}`, true);
-                } finally {
-                    showLoading(false);
-                }
-            };
-            
+        window.deleteItem = async (endpoint, id, name) => {
+            // Check if trying to delete primary admin user
             if (endpoint === 'users' && id === 'user1') {
-                showToast(`Cannot delete the primary mock admin user.`, true);
+                // Cannot delete the primary mock admin user
                 return;
             }
 
-            customConfirm(`You are about to permanently delete "${name}". This cannot be undone.`, onConfirm, endpoint.replace(/_/g, ' ').slice(0, -1));
+            // Delete immediately without confirmation
+            showLoading(true);
+            try {
+                const response = await supabase.from(endpoint).delete().eq('id', id); 
+
+                if (response.error) {
+                    // Error occurred but no popup shown
+                } else {
+                    // Auto-refresh the current view after successful deletion
+                    setTimeout(() => {
+                        handleRouting();
+                    }, 500);
+                }
+            } catch (error) {
+                // Error occurred but no popup shown
+            } finally {
+                showLoading(false);
+            }
         };
 
 
@@ -1412,9 +1887,6 @@
             'local_delicacies': () => renderManagementView('local_delicacies', 'Delicacy'),
             'destinations': () => renderManagementView('destinations', 'Destination'),
             'local_spots': () => renderManagementView('local_spots', 'Local Spot'),
-            'hotels': () => renderManagementView('hotels', 'Hotel'),
-            'restaurants': () => renderManagementView('restaurants', 'Restaurant'),
-            'eateries': () => renderManagementView('eateries', 'Eatery'),
             'login': renderLoginView 
         };
 
@@ -1462,9 +1934,53 @@
             }
         };
         
+        // Test function for debugging save functionality
+        window.testSave = async () => {
+            console.log("Testing save functionality...");
+            const testData = {
+                name: "Test Item",
+                origin: "Cebu City",
+                description: "Test description",
+                is_active: true
+            };
+            
+            try {
+                console.log("Attempting to save test data:", testData);
+                const response = await supabase.from('local_delicacies').insert(testData);
+                console.log("Test save response:", response);
+                
+                if (response.error) {
+                    console.error("Test save failed:", response.error);
+                } else {
+                    console.log("Test save successful!");
+                }
+            } catch (error) {
+                console.error("Test save error:", error);
+            }
+        };
+
+        // ====================================================================
+        // 7. INITIALIZATION AND APP STARTUP
+        // ====================================================================
+        
+        const initializeApp = () => {
+            // Try to restore authentication state from localStorage
+            const authRestored = loadAuthState();
+            
+            if (authRestored && isLoggedIn) {
+                // Update UI to reflect logged-in state
+                updateNavigation();
+                updateUserDisplay();
+                console.log('Authentication state restored from localStorage');
+            }
+            
+            // Handle routing based on current state
+            handleRouting();
+        };
+
         // Initialize App
         window.addEventListener('hashchange', handleRouting);
-        window.addEventListener('load', handleRouting);
+        window.addEventListener('load', initializeApp);
 
     </script>
 </body>

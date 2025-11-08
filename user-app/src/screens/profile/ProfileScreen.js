@@ -18,7 +18,7 @@ import { getThemeColors } from '../../utils/theme';
 import favoritesService from '../../services/api/favoritesService';
 import reviewsService from '../../services/api/reviewsService';
 
-const ProfileScreen = ({ navigation, route, userData: userDataProp }) => {
+const ProfileScreen = ({ navigation, route, userData: userDataProp, onLogout }) => {
   const { isDarkMode } = useTheme();
   const colors = getThemeColors(isDarkMode);
 
@@ -221,7 +221,6 @@ const ProfileScreen = ({ navigation, route, userData: userDataProp }) => {
           'Guest User'),
     email: currentUserData?.email || 'guest@example.com',
     avatar: currentUserData?.avatar || currentUserData?.avatar_url || currentUserData?.picture || '', // Check multiple avatar fields
-    favoriteSpots: favoritesCount || 0,
     reviews: reviewsCount || 0,
     language: 'English',
     currency: 'PHP',
@@ -234,7 +233,6 @@ const ProfileScreen = ({ navigation, route, userData: userDataProp }) => {
     name: userProfile?.name,
     email: userProfile?.email,
     avatar: userProfile?.avatar ? 'Present' : 'Missing',
-    favoriteSpots: userProfile?.favoriteSpots,
     reviews: userProfile?.reviews
   });
   console.log('ProfileScreen: Current user data keys:', Object.keys(currentUserData || {}));
@@ -264,11 +262,11 @@ const ProfileScreen = ({ navigation, route, userData: userDataProp }) => {
     },
     {
       id: '2',
-      title: 'Favorite Cebu Spots',
+      title: 'My Favorites',
       icon: 'heart-outline',
       action: () => navigation.navigate('FavoriteSpots'),
-      accessibilityLabel: 'Favorite Cebu Spots',
-      accessibilityHint: 'View your favorite tourist spots in Cebu',
+      accessibilityLabel: 'My Favorites',
+      accessibilityHint: 'View and manage your favorite places',
     },
     {
       id: '3',
@@ -320,31 +318,21 @@ const ProfileScreen = ({ navigation, route, userData: userDataProp }) => {
             console.log('🔄 Starting logout process...');
             setIsLoading(true);
             try {
-              // Local auth logout
-              console.log('🔄 Calling LocalAuthService.signOut()...');
-              await LocalAuthService.signOut();
-              console.log('✅ LocalAuthService.signOut() completed');
+              // Use the onLogout function passed from AppNavigator
+              if (onLogout) {
+                await onLogout();
+                console.log('✅ Logout completed via AppNavigator');
+              } else {
+                // Fallback to local logout if onLogout is not available
+                console.log('🔄 Calling LocalAuthService.signOut()...');
+                await LocalAuthService.signOut();
+                console.log('✅ LocalAuthService.signOut() completed');
+              }
               
-              // Clear loading state first
+              // Clear loading state
               console.log('🔄 Setting isLoading to false...');
               setIsLoading(false);
               console.log('✅ isLoading set to false');
-              
-              // Small delay to ensure state updates complete before navigation
-              console.log('🔄 Starting navigation reset in 100ms...');
-              setTimeout(() => {
-                console.log('🔄 Executing navigation.reset()...');
-                navigation.reset({
-                  index: 0,
-                  routes: [{ 
-                    name: 'Auth',
-                    params: {
-                      screen: 'Landing'
-                    }
-                  }],
-                });
-                console.log('✅ navigation.reset() completed');
-              }, 100);
             } catch (error) {
               console.error('❌ Logout error:', error);
               Alert.alert('Error', 'Failed to logout. Please try again.');
@@ -401,8 +389,8 @@ const ProfileScreen = ({ navigation, route, userData: userDataProp }) => {
               
               <View style={styles.statsContainer}>
                 <View style={[styles.statCard, isDarkMode && styles.statCardDark]}>
-                  <Text style={[styles.statNumber, isDarkMode && styles.statNumberDark]}>{userProfile?.favoriteSpots || 0}</Text>
-                  <Text style={[styles.statLabel, isDarkMode && styles.statLabelDark]}>Favorite Spots</Text>
+                  <Text style={[styles.statNumber, isDarkMode && styles.statNumberDark]}>{favoritesCount || 0}</Text>
+                  <Text style={[styles.statLabel, isDarkMode && styles.statLabelDark]}>Favorites</Text>
                 </View>
                 <View style={[styles.statCard, isDarkMode && styles.statCardDark]}>
                   <Text style={[styles.statNumber, isDarkMode && styles.statNumberDark]}>{userProfile?.reviews || 0}</Text>

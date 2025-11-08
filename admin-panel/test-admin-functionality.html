@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Functionality Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Admin Panel Functionality Test</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Super Admin Test -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Super Administrator Test</h2>
+                <p class="text-gray-600 mb-4">Test with full access to all features</p>
+                <div class="space-y-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Access to Users Management</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Access to Destinations Management</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Access to Delicacies Management</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Access to Spots Management</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Access to Hotels Management</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Access to Restaurants Management</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Access to Eateries Management</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <strong>Login Credentials:</strong><br>
+                    Email: superadmin@tourmate.com<br>
+                    Password: password
+                </div>
+            </div>
+
+            <!-- Admin Test -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Content Administrator Test</h2>
+                <p class="text-gray-600 mb-4">Test with limited access to content only</p>
+                <div class="space-y-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-red-500 rounded-full"></span>
+                        <span class="text-gray-500">No Access to Users Management</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Access to Destinations Management</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Access to Delicacies Management</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Access to Spots Management</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-red-500 rounded-full"></span>
+                        <span class="text-gray-500">No Access to Hotels Management</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-red-500 rounded-full"></span>
+                        <span class="text-gray-500">No Access to Restaurants Management</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-red-500 rounded-full"></span>
+                        <span class="text-gray-500">No Access to Eateries Management</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <strong>Login Credentials:</strong><br>
+                    Email: admin@tourmate.com<br>
+                    Password: password
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Instructions -->
+        <div class="mt-8 bg-blue-50 p-6 rounded-lg">
+            <h3 class="text-lg font-bold text-blue-900 mb-4">Test Instructions</h3>
+            <ol class="list-decimal list-inside space-y-2 text-blue-800">
+                <li>Open the admin panel: <code class="bg-blue-200 px-2 py-1 rounded">admin-panel/admin.html</code></li>
+                <li>Test Super Administrator login with full access</li>
+                <li>Verify all navigation items are visible</li>
+                <li>Test Content Administrator login with limited access</li>
+                <li>Verify only allowed navigation items are visible</li>
+                <li>Test spot management functionality</li>
+                <li>Verify permission-based access control</li>
+                <li>Test dashboard shows different content based on role</li>
+            </ol>
+        </div>
+
+        <!-- Features Implemented -->
+        <div class="mt-8 bg-green-50 p-6 rounded-lg">
+            <h3 class="text-lg font-bold text-green-900 mb-4">Features Implemented</h3>
+            <ul class="list-disc list-inside space-y-2 text-green-800">
+                <li>✅ Role-based access control system</li>
+                <li>✅ Super Administrator with full access</li>
+                <li>✅ Content Administrator with limited access (delicacies, destinations, spots only)</li>
+                <li>✅ Dynamic navigation based on permissions</li>
+                <li>✅ Permission-based dashboard content</li>
+                <li>✅ Spot management alongside destinations and delicacies</li>
+                <li>✅ Database schema with admin roles</li>
+                <li>✅ User interface updates for role display</li>
+                <li>✅ Access denied pages for unauthorized sections</li>
+            </ul>
+        </div>
+
+        <!-- Database Setup -->
+        <div class="mt-8 bg-yellow-50 p-6 rounded-lg">
+            <h3 class="text-lg font-bold text-yellow-900 mb-4">Database Setup Required</h3>
+            <p class="text-yellow-800 mb-4">Run these SQL scripts in your Supabase dashboard:</p>
+            <ol class="list-decimal list-inside space-y-2 text-yellow-800">
+                <li><code class="bg-yellow-200 px-2 py-1 rounded">admin-panel/create-admin-role.sql</code> - Creates the admin role system</li>
+                <li><code class="bg-yellow-200 px-2 py-1 rounded">admin-panel/update-database-with-admin-roles.sql</code> - Updates existing database</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

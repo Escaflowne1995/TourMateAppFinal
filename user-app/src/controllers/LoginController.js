@@ -44,9 +44,6 @@ class LoginController {
       }
     }
 
-    // Navigate to main app
-    NavigationService.navigateToMainApp(navigation, userResult.userData);
-
     if (__DEV__) {
       console.log('✅ Login success:', userResult.userData.email);
     }

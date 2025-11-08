@@ -7,13 +7,21 @@ import AuthTest from '../components/forms/AuthTest';
 
 const AuthStack = createStackNavigator();
 
-export default function AuthNavigator() {
+export default function AuthNavigator({ onLogin }) {
   return (
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
-      <AuthStack.Screen name="Landing" component={LandingScreen} />
-      <AuthStack.Screen name="Login" component={Login} />
-      <AuthStack.Screen name="Signup" component={Signup} />
-      <AuthStack.Screen name="AuthTest" component={AuthTest} />
+      <AuthStack.Screen name="Landing">
+        {(props) => <LandingScreen {...props} onLogin={onLogin} />}
+      </AuthStack.Screen>
+      <AuthStack.Screen name="Login">
+        {(props) => <Login {...props} onLogin={onLogin} />}
+      </AuthStack.Screen>
+      <AuthStack.Screen name="Signup">
+        {(props) => <Signup {...props} onLogin={onLogin} />}
+      </AuthStack.Screen>
+      <AuthStack.Screen name="AuthTest">
+        {(props) => <AuthTest {...props} onLogin={onLogin} />}
+      </AuthStack.Screen>
     </AuthStack.Navigator>
   );
 } 

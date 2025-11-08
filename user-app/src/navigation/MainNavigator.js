@@ -14,6 +14,7 @@ const Tab = createBottomTabNavigator();
 
 export default function MainNavigator({ route }) {
   const userData = route.params?.userData || {};
+  const onLogout = route.params?.onLogout;
   const { isDarkMode } = useTheme();
   const colors = getThemeColors(isDarkMode);
   const insets = useSafeAreaInsets();
@@ -95,10 +96,7 @@ export default function MainNavigator({ route }) {
       <Tab.Screen 
         name="Home" 
         options={{
-          title: (() => {
-            const name = userData.fullName || userData.displayName || userData.name;
-            return name ? `Welcome, ${name.split(' ')[0]}!` : 'Discover Cebu';
-          })(),
+          title: 'Discover Cebu',
           tabBarLabel: 'Home',
         }}
       >
@@ -120,7 +118,7 @@ export default function MainNavigator({ route }) {
           tabBarLabel: 'Profile',
         }}
       >
-        {(props) => <ProfileScreen {...props} userData={userData} />}
+        {(props) => <ProfileScreen {...props} userData={userData} onLogout={onLogout} />}
       </Tab.Screen>
     </Tab.Navigator>
   );

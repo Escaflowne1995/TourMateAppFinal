@@ -7,7 +7,7 @@ import useLoginLogic from '../../hooks/useLoginLogic';
 import { getLoginStyles } from '../../styles/authStyles';
 // Firebase debug removed
 
-const Login = ({ navigation, route }) => {
+const Login = ({ navigation, route, onLogin }) => {
   const { isDarkMode } = useTheme();
   const colors = getThemeColors(isDarkMode);
   const styles = getLoginStyles(colors, isDarkMode);
@@ -24,7 +24,7 @@ const Login = ({ navigation, route }) => {
     validationSchema,
     handleLogin,
     canSubmit,
-  } = useLoginLogic(navigation);
+  } = useLoginLogic(navigation, onLogin);
 
   React.useEffect(() => {
     // Uncomment for debugging Firebase

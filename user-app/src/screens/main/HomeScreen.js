@@ -6,7 +6,6 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { getThemeColors } from '../../utils/theme';
 import HorizontalCarousel from '../../components/home/HorizontalCarousel';
 import useHomeData from '../../hooks/useHomeData';
-import { SafeTextRenderer } from '../../components/common/SafeTextRenderer';
 
 const HomeScreen = ({ navigation, route, userData: userDataProp }) => {
   const { isDarkMode } = useTheme();
@@ -136,7 +135,6 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    textAlign: 'justify',
     width: '100%',
   },
   welcomeTitle: {
