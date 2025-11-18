@@ -221,9 +221,10 @@
                     Destinations
                 </a>
                 <!-- Additional navigation items for superadmin only -->
-                <div id="superadmin-nav" class="hidden">
-                    <!-- No additional items for superadmin - keeping it clean with just main content management -->
-                </div>
+                <a href="#admin-management" class="nav-link flex items-center" data-route="admin-management" data-permission="users">
+                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Admin Management
+                </a>
             </nav>
 
             <!-- User and Logout -->
@@ -359,6 +360,7 @@
                 email: 'superadmin@tourmate.com', 
                 name: 'Super Administrator', 
                 role: 'superadmin',
+                password: 'SuperAdmin@2024',
                 permissions: {
                     users: true, 
                     destinations: true, 
@@ -373,6 +375,7 @@
                 email: 'admin@tourmate.com', 
                 name: 'Content Administrator', 
                 role: 'admin',
+                password: 'Admin@2024',
                 permissions: {
                     users: false, 
                     destinations: true, 
@@ -401,6 +404,7 @@
             if (tableName === 'hotels') return hotelsData;
             if (tableName === 'restaurants') return restaurantsData;
             if (tableName === 'eateries') return eateriesData;
+            if (tableName === 'admin_users') return adminUsersData;
             if (tableName === 'users') return usersData; 
             if (tableName === 'user_preferences') return userPreferencesData; 
             return [];
@@ -444,26 +448,60 @@
                     insert: async (item) => {
                         await new Promise(resolve => setTimeout(resolve, 500));
                         const newItem = { ...item, id: crypto.randomUUID(), created_at: new Date().toISOString() };
-                        dataStore.push(newItem);
                         
                         // Update the global data store based on table name
-                        if (tableName === 'local_delicacies') localDelicaciesData = dataStore;
-                        else if (tableName === 'destinations') destinationsData = dataStore;
-                        else if (tableName === 'hotels') hotelsData = dataStore;
-                        else if (tableName === 'restaurants') restaurantsData = dataStore;
-                        else if (tableName === 'eateries') eateriesData = dataStore;
+                        if (tableName === 'local_delicacies') {
+                            localDelicaciesData.push(newItem);
+                        } else if (tableName === 'destinations') {
+                            destinationsData.push(newItem);
+                        } else if (tableName === 'hotels') {
+                            hotelsData.push(newItem);
+                        } else if (tableName === 'restaurants') {
+                            restaurantsData.push(newItem);
+                        } else if (tableName === 'eateries') {
+                            eateriesData.push(newItem);
+                        } else if (tableName === 'admin_users') {
+                            adminUsersData.push(newItem);
+                        } else if (tableName === 'users') {
+                            usersData.push(newItem);
+                        }
                         
-                        handleRouting(); 
+                        // Only auto-refresh for non-admin tables
+                        if (tableName !== 'admin_users') {
+                            handleRouting();
+                        }
+                        
                         return { data: [newItem], error: null };
                     },
                     update: async (updates, id) => {
                         await new Promise(resolve => setTimeout(resolve, 500));
-                        const index = dataStore.findIndex(d => d.id === id);
+                        let targetArray = getStore(tableName);
+                        const index = targetArray.findIndex(d => d.id === id);
+                        
                         if (index !== -1) {
-                            // Only update non-null properties in the mock for simplicity
-                            dataStore[index] = { ...dataStore[index], ...updates };
-                            handleRouting();
-                            return { data: [dataStore[index]], error: null };
+                            // Update the item in the appropriate global array
+                            if (tableName === 'local_delicacies') {
+                                localDelicaciesData[index] = { ...localDelicaciesData[index], ...updates };
+                            } else if (tableName === 'destinations') {
+                                destinationsData[index] = { ...destinationsData[index], ...updates };
+                            } else if (tableName === 'hotels') {
+                                hotelsData[index] = { ...hotelsData[index], ...updates };
+                            } else if (tableName === 'restaurants') {
+                                restaurantsData[index] = { ...restaurantsData[index], ...updates };
+                            } else if (tableName === 'eateries') {
+                                eateriesData[index] = { ...eateriesData[index], ...updates };
+                            } else if (tableName === 'admin_users') {
+                                adminUsersData[index] = { ...adminUsersData[index], ...updates };
+                            } else if (tableName === 'users') {
+                                usersData[index] = { ...usersData[index], ...updates };
+                            }
+                            
+                            // Only auto-refresh for non-admin tables
+                            if (tableName !== 'admin_users') {
+                                handleRouting();
+                            }
+                            
+                            return { data: [getStore(tableName)[index]], error: null };
                         }
                         return { data: null, error: { message: 'Not Found' } };
                     },
@@ -477,7 +515,8 @@
                         else if (tableName === 'hotels') hotelsData = hotelsData.filter(d => d.id !== id);
                         else if (tableName === 'restaurants') restaurantsData = restaurantsData.filter(d => d.id !== id);
                         else if (tableName === 'eateries') eateriesData = eateriesData.filter(d => d.id !== id);
-                        else if (tableName === 'users') usersData = usersData.filter(d => d.id !== id); 
+                        else if (tableName === 'users') usersData = usersData.filter(d => d.id !== id);
+                        else if (tableName === 'admin_users') adminUsersData = adminUsersData.filter(d => d.id !== id); 
 
                         if (getStore(tableName).length < initialLength) {
                             handleRouting();
@@ -564,13 +603,22 @@
             );
             
             if (adminUser) {
-                // For demo purposes, accept any password
-                // In production, you would verify the password hash
-                currentUser = adminUser;
-                userPermissions = adminUser.permissions;
-                return { success: true, user: adminUser };
+                // Check if password matches the one stored in the database
+                // In production, this should use bcrypt.compare() for hashed passwords
+                const validPassword = adminUser.password === password;
+                
+                if (validPassword) {
+                    currentUser = adminUser;
+                    userPermissions = adminUser.permissions;
+                    console.log('Authentication successful for:', email);
+                    return { success: true, user: adminUser };
+                } else {
+                    console.log('Invalid password for:', email);
+                    return { success: false, error: 'Invalid password.' };
+                }
             }
             
+            console.log('User not found or inactive:', email);
             return { success: false, error: 'Invalid credentials or user not found.' };
         };
 
@@ -1173,9 +1221,20 @@
         // 4. AUTHENTICATION VIEWS AND HANDLERS
         // ====================================================================
 
-        const renderLoginView = () => {
+        const renderLoginView = async () => {
             document.body.classList.add('bg-gray-100');
             document.body.classList.remove('bg-gray-50');
+            
+            // Load fresh admin users from database before showing login
+            try {
+                const response = await supabase.from('admin_users').select('*');
+                if (response.data && response.data.length > 0) {
+                    adminUsersData = response.data;
+                    console.log('Loaded', adminUsersData.length, 'admin users for authentication');
+                }
+            } catch (error) {
+                console.log('Using cached admin data:', error);
+            }
             
             contentContainer.innerHTML = `
                 <div class="flex items-center justify-center min-h-screen">
@@ -1197,16 +1256,12 @@
                         <form id="login-form" novalidate>
                             <div class="mb-4">
                                 <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                                <select id="email" name="email" required class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus-ring-light p-3">
-                                    <option value="">Select Admin Account</option>
-                                    <option value="superadmin@tourmate.com">Super Administrator (Full Access)</option>
-                                    <option value="admin@tourmate.com">Content Administrator (Limited Access)</option>
-                                </select>
+                                <input type="email" id="email" name="email" required class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus-ring-light p-3" placeholder="Enter your email" autocomplete="email">
                                 <div id="email-error" class="hidden mt-1 text-sm text-red-600"></div>
                             </div>
                             <div class="mb-6">
                                 <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                                <input type="password" id="password" name="password" required value="password" class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus-ring-light p-3" placeholder="password">
+                                <input type="password" id="password" name="password" required class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus-ring-light p-3" placeholder="Enter your password" autocomplete="current-password">
                                 <div id="password-error" class="hidden mt-1 text-sm text-red-600"></div>
                             </div>
                             <button type="submit" id="login-btn" class="w-full py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-150 font-bold text-white shadow-md shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -1216,7 +1271,11 @@
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
                             </button>
-                            <p class="text-center text-xs text-gray-500 mt-4">Demo credentials: admin@admin.com / password</p>
+                            <div class="text-center text-xs text-gray-500 mt-4 space-y-1">
+                                <p class="font-semibold">Demo Credentials:</p>
+                                <p>Super Admin: <span class="font-mono">superadmin@tourmate.com</span> / <span class="font-mono">SuperAdmin@2024</span></p>
+                                <p>Admin: <span class="font-mono">admin@tourmate.com</span> / <span class="font-mono">Admin@2024</span></p>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -1840,6 +1899,464 @@
             }
         };
 
+        // Admin Management View Function
+        const renderAdminManagementView = async () => {
+            // Only super admin can access this
+            if (!currentUser || currentUser.role !== 'superadmin') {
+                contentContainer.innerHTML = `
+                    <div class="flex items-center justify-center min-h-96">
+                        <div class="text-center">
+                            <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Access Denied</h3>
+                            <p class="text-gray-600 mb-4">Only Super Administrators can manage admin accounts.</p>
+                            <button onclick="window.location.hash = '#dashboard'" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                Return to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Fetch fresh admin users from database
+            showLoading(true);
+            try {
+                const response = await supabase.from('admin_users').select('*');
+                if (response.data && response.data.length > 0) {
+                    // Update local array with fresh data from database
+                    adminUsersData = response.data;
+                }
+            } catch (error) {
+                console.log('Using local admin data:', error);
+            } finally {
+                showLoading(false);
+            }
+            
+            const adminUsers = getStore('admin_users');
+            
+            contentContainer.innerHTML = `
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-1">Admin Management</h2>
+                    <p class="text-gray-500">Manage administrator accounts and permissions</p>
+                </div>
+                
+                <div class="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
+                    <h3 class="text-xl font-semibold text-gray-700">Admin Accounts (${adminUsers.length})</h3>
+                    <button id="add-admin-btn" class="flex items-center px-3 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-150 font-semibold text-white shadow-md shadow-blue-500/30 focus-ring-light">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Add Admin
+                    </button>
+                </div>
+                
+                <!-- Admin Users Table -->
+                <div class="overflow-x-auto relative rounded-xl shadow-md border border-gray-200 bg-white">
+                    <table class="w-full text-sm text-left text-gray-600">
+                        <thead class="text-xs uppercase bg-gray-100 text-gray-600">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Name</th>
+                                <th scope="col" class="px-6 py-3">Email</th>
+                                <th scope="col" class="px-6 py-3">Role</th>
+                                <th scope="col" class="px-6 py-3">Status</th>
+                                <th scope="col" class="px-6 py-3">Created</th>
+                                <th scope="col" class="px-6 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${adminUsers.map(admin => `
+                                <tr class="border-b border-gray-200 hover:bg-gray-50 transition duration-150">
+                                    <td class="px-6 py-4 font-medium text-gray-900">${admin.name}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">${admin.email}</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full ${admin.role === 'superadmin' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}">
+                                            ${admin.role === 'superadmin' ? 'Super Admin' : 'Content Admin'}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full ${admin.is_active ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
+                                            ${admin.is_active ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">${new Date(admin.created_at).toLocaleDateString()}</td>
+                                    <td class="px-6 py-4 flex space-x-2">
+                                        <button onclick="editAdmin('${admin.id}')" class="px-3 py-1 bg-blue-100 rounded-lg hover:bg-blue-200 transition duration-150 text-blue-600 font-medium text-sm">
+                                            Edit
+                                        </button>
+                                        ${admin.id !== currentUser.id ? `
+                                            <button onclick="toggleAdminStatus('${admin.id}', ${admin.is_active})" class="px-3 py-1 bg-${admin.is_active ? 'yellow' : 'green'}-100 rounded-lg hover:bg-${admin.is_active ? 'yellow' : 'green'}-200 transition duration-150 text-${admin.is_active ? 'yellow' : 'green'}-600 font-medium text-sm">
+                                                ${admin.is_active ? 'Deactivate' : 'Activate'}
+                                            </button>
+                                        ` : ''}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // Add event listener for add admin button
+            $('#add-admin-btn').addEventListener('click', () => {
+                showAddAdminForm();
+            });
+        };
+
+        // Function to show add admin form
+        window.showAddAdminForm = () => {
+            modal.content.innerHTML = `
+                <form id="admin-form" class="space-y-4">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Create New Admin Account</h2>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Name *</label>
+                        <input type="text" id="admin-name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus-ring-light" placeholder="Enter admin name">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
+                        <input type="email" id="admin-email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus-ring-light" placeholder="Enter email address">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Password *</label>
+                        <input type="password" id="admin-password" required minlength="8" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus-ring-light" placeholder="Enter password (min 8 characters)">
+                        <p class="text-xs text-gray-500 mt-1">Password must be at least 8 characters long</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Role *</label>
+                        <select id="admin-role" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus-ring-light">
+                            <option value="">Select Role</option>
+                            <option value="admin">Content Administrator</option>
+                            <option value="superadmin">Super Administrator</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="modal.hide()" class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition duration-150 font-semibold focus-ring-light">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-150 font-semibold text-white focus-ring-light">
+                            Create Admin
+                        </button>
+                    </div>
+                </form>
+            `;
+            
+            modal.show();
+            
+            // Handle form submission
+            $('#admin-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const name = $('#admin-name').value.trim();
+                const email = $('#admin-email').value.trim();
+                const password = $('#admin-password').value;
+                const role = $('#admin-role').value;
+                
+                // Validate inputs
+                if (!name || !email || !password || !role) {
+                    showToast('Please fill in all required fields', true);
+                    return;
+                }
+                
+                // Check if email already exists
+                const existingAdmin = adminUsersData.find(admin => admin.email === email);
+                if (existingAdmin) {
+                    showToast('An admin with this email already exists', true);
+                    return;
+                }
+                
+                showLoading(true);
+                
+                try {
+                    // Set default permissions based on role
+                    const permissions = role === 'superadmin' ? {
+                        users: true,
+                        destinations: true,
+                        delicacies: true,
+                        spots: true,
+                        hotels: true,
+                        restaurants: true,
+                        eateries: true,
+                        settings: true
+                    } : {
+                        users: false,
+                        destinations: true,
+                        delicacies: true,
+                        spots: true,
+                        hotels: false,
+                        restaurants: false,
+                        eateries: false,
+                        settings: false
+                    };
+                    
+                    const newAdmin = {
+                        name,
+                        email,
+                        password,
+                        role,
+                        permissions,
+                        is_active: true
+                    };
+                    
+                    const response = await supabase.from('admin_users').insert(newAdmin);
+                    
+                    console.log('Create admin response:', response);
+                    
+                    if (response && response.error) {
+                        console.error('Admin creation error:', response.error);
+                        // Check for duplicate email error
+                        if (response.error.message && response.error.message.includes('duplicate key')) {
+                            showToast('An admin with this email already exists!', true);
+                        } else {
+                            showToast(`Failed to create admin account: ${response.error.message || 'Unknown error'}`, true);
+                        }
+                    } else {
+                        // Success (either mock or real Supabase)
+                        console.log('Admin created successfully:', response);
+                        showToast('Admin account created successfully!');
+                        modal.hide();
+                        
+                        // Reload fresh data from database before refreshing view
+                        if (response.data) {
+                            try {
+                                const freshData = await supabase.from('admin_users').select('*');
+                                if (freshData.data) {
+                                    adminUsersData = freshData.data;
+                                    console.log('Admin list refreshed with', adminUsersData.length, 'admins');
+                                }
+                            } catch (err) {
+                                console.error('Error refreshing admin list:', err);
+                            }
+                        }
+                        
+                        // Refresh the admin management view
+                        setTimeout(() => {
+                            handleRouting();
+                        }, 300);
+                    }
+                } catch (error) {
+                    console.error('Exception during admin creation:', error);
+                    showToast(`An error occurred: ${error.message}`, true);
+                } finally {
+                    showLoading(false);
+                }
+            });
+        };
+
+        // Function to edit admin
+        window.editAdmin = (adminId) => {
+            const admin = adminUsersData.find(a => a.id === adminId);
+            if (!admin) return;
+            
+            modal.content.innerHTML = `
+                <form id="edit-admin-form" class="space-y-4">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Edit Admin Account</h2>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Name *</label>
+                        <input type="text" id="edit-admin-name" value="${admin.name}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus-ring-light">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
+                        <input type="email" id="edit-admin-email" value="${admin.email}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus-ring-light" ${admin.id === currentUser.id ? 'disabled' : ''}>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">New Password (leave blank to keep current)</label>
+                        <input type="password" id="edit-admin-password" minlength="8" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus-ring-light" placeholder="Enter new password">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Role *</label>
+                        <select id="edit-admin-role" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus-ring-light" ${admin.id === currentUser.id ? 'disabled' : ''}>
+                            <option value="admin" ${admin.role === 'admin' ? 'selected' : ''}>Content Administrator</option>
+                            <option value="superadmin" ${admin.role === 'superadmin' ? 'selected' : ''}>Super Administrator</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="modal.hide()" class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition duration-150 font-semibold focus-ring-light">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-150 font-semibold text-white focus-ring-light">
+                            Update Admin
+                        </button>
+                    </div>
+                </form>
+            `;
+            
+            modal.show();
+            
+            // Handle form submission
+            $('#edit-admin-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const name = $('#edit-admin-name').value.trim();
+                const email = $('#edit-admin-email').value.trim();
+                const password = $('#edit-admin-password').value;
+                const role = $('#edit-admin-role').value;
+                
+                showLoading(true);
+                
+                try {
+                    const updates = { name };
+                    
+                    if (admin.id !== currentUser.id) {
+                        updates.email = email;
+                        updates.role = role;
+                        
+                        // Update permissions based on role
+                        updates.permissions = role === 'superadmin' ? {
+                            users: true,
+                            destinations: true,
+                            delicacies: true,
+                            spots: true,
+                            hotels: true,
+                            restaurants: true,
+                            eateries: true,
+                            settings: true
+                        } : {
+                            users: false,
+                            destinations: true,
+                            delicacies: true,
+                            spots: true,
+                            hotels: false,
+                            restaurants: false,
+                            eateries: false,
+                            settings: false
+                        };
+                    }
+                    
+                    if (password) {
+                        updates.password = password;
+                    }
+                    
+                    // Update in database
+                    const response = await supabase
+                        .from('admin_users')
+                        .update(updates)
+                        .eq('id', adminId);
+                    
+                    console.log('Update admin response:', response);
+                    
+                    if (response && response.error) {
+                        console.error('Error updating admin:', response.error);
+                        showToast(`Failed to update admin: ${response.error.message}`, true);
+                    } else {
+                        // Update local data store
+                        const index = adminUsersData.findIndex(a => a.id === adminId);
+                        if (index !== -1) {
+                            adminUsersData[index] = { ...adminUsersData[index], ...updates };
+                        }
+                        
+                        // Fetch fresh data from database
+                        try {
+                            const freshData = await supabase.from('admin_users').select('*');
+                            if (freshData.data) {
+                                adminUsersData = freshData.data;
+                                console.log('Admin list refreshed after update');
+                            }
+                        } catch (err) {
+                            console.error('Error refreshing admin list:', err);
+                        }
+                        
+                        showToast('Admin account updated successfully!');
+                        modal.hide();
+                        
+                        // Refresh the admin management view
+                        setTimeout(() => {
+                            handleRouting();
+                        }, 300);
+                    }
+                } catch (error) {
+                    showToast('An error occurred while updating the admin account', true);
+                } finally {
+                    showLoading(false);
+                }
+            });
+        };
+
+        // Function to toggle admin status
+        window.toggleAdminStatus = (adminId, currentStatus) => {
+            const admin = adminUsersData.find(a => a.id === adminId);
+            if (!admin) return;
+            
+            const newStatus = !currentStatus;
+            const action = newStatus ? 'activate' : 'deactivate';
+            
+            modal.content.innerHTML = `
+                <div class="flex flex-col items-center p-4">
+                    <svg class="w-12 h-12 text-${newStatus ? 'green' : 'yellow'}-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Confirm Action</h3>
+                    <p class="text-gray-600 text-center mb-6">Are you sure you want to ${action} ${admin.name}?</p>
+                    <div class="flex justify-end space-x-3 w-full">
+                        <button type="button" onclick="modal.hide()" class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition duration-150 font-semibold focus-ring-light">Cancel</button>
+                        <button type="button" onclick="confirmToggleAdminStatus('${adminId}', ${newStatus})" class="px-4 py-2 rounded-lg bg-${newStatus ? 'green' : 'yellow'}-500 hover:bg-${newStatus ? 'green' : 'yellow'}-600 transition duration-150 font-semibold text-white focus-ring-light">
+                            Yes, ${action.charAt(0).toUpperCase() + action.slice(1)}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            modal.show();
+        };
+
+        // Function to confirm toggle admin status
+        window.confirmToggleAdminStatus = async (adminId, newStatus) => {
+            showLoading(true);
+            
+            try {
+                // Update in database
+                const response = await supabase
+                    .from('admin_users')
+                    .update({ is_active: newStatus })
+                    .eq('id', adminId);
+                
+                console.log('Toggle status response:', response);
+                
+                if (response && response.error) {
+                    console.error('Error toggling admin status:', response.error);
+                    showToast('Failed to update admin status', true);
+                } else {
+                    // Update local array
+                    const index = adminUsersData.findIndex(a => a.id === adminId);
+                    if (index !== -1) {
+                        adminUsersData[index].is_active = newStatus;
+                    }
+                    
+                    // Fetch fresh data from database
+                    try {
+                        const freshData = await supabase.from('admin_users').select('*');
+                        if (freshData.data) {
+                            adminUsersData = freshData.data;
+                            console.log('Admin list refreshed after status toggle');
+                        }
+                    } catch (err) {
+                        console.error('Error refreshing admin list:', err);
+                    }
+                    
+                    showToast(`Admin account ${newStatus ? 'activated' : 'deactivated'} successfully!`);
+                    modal.hide();
+                    
+                    // Refresh the view
+                    setTimeout(() => {
+                        handleRouting();
+                    }, 300);
+                }
+            } catch (error) {
+                console.error('Exception toggling admin status:', error);
+                showToast('An error occurred while updating admin status', true);
+            } finally {
+                showLoading(false);
+            }
+        };
+
         // Global functions for table/card actions
         window.editItem = (endpoint, id) => {
             let dataStore = getStore(endpoint);
@@ -1887,10 +2404,11 @@
             'local_delicacies': () => renderManagementView('local_delicacies', 'Delicacy'),
             'destinations': () => renderManagementView('destinations', 'Destination'),
             'local_spots': () => renderManagementView('local_spots', 'Local Spot'),
+            'admin-management': renderAdminManagementView,
             'login': renderLoginView 
         };
 
-        const handleRouting = () => {
+        const handleRouting = async () => {
             const currentHash = window.location.hash.substring(1);
             let route = currentHash || 'dashboard';
 
@@ -1898,10 +2416,10 @@
             if (!isLoggedIn) {
                 if (route !== 'login') {
                     window.location.hash = '#login';
-                    renderLoginView();
+                    await renderLoginView();
                     return;
                 }
-                routes[route]();
+                await routes[route]();
                 return;
             } else {
                 // LOGGED IN
@@ -1927,10 +2445,10 @@
 
             // Render the view
             if (routes[route]) {
-                routes[route]();
+                await routes[route]();
             } else {
                 window.location.hash = '#dashboard';
-                routes['dashboard']();
+                await routes['dashboard']();
             }
         };
         
